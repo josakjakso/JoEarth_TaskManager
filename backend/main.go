@@ -1,9 +1,25 @@
 package main
 
-import "fmt"
+import (
+	"context"
+	"log"
+	"os"
+
+	"github.com/jackc/pgx/v5"
+)
 
 func main() {
-	fmt.Println("test main")
-	fmt.Println("wtf just happend why it use my old github")
-	fmt.Println("test 2")
+    conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+    if err != nil {
+        log.Fatalf("Failed to connect to the database: %v", err)
+    }
+    defer conn.Close(context.Background())
+
+    // Example query to test connection
+    var version string
+    if err := conn.QueryRow(context.Background(), "SELECT version()").Scan(&version); err != nil {
+        log.Fatalf("Query failed: %v", err)
+    }
+
+    log.Println("Connected to:", version)
 }
