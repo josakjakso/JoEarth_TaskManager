@@ -3,12 +3,19 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-    conn, err := pgx.Connect(context.Background(), "postgresql://postgres:JoEarth1212312121@db.uviikrjmyiuhtoqxsthx.supabase.co:5432/postgres")
+	err := godotenv.Load()
+	if err != nil {
+        log.Fatalf("can't load .env %v", err)
+    }
+
+    conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
     if err != nil {
         log.Fatalf("Failed to connect to the database: %v", err)
     }
