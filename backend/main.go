@@ -22,6 +22,7 @@ func main() {
 	}
 	defer conn.Close(context.Background())
 
+
 	// Example query to test connection
 	var version string
 	if err := conn.QueryRow(context.Background(), "SELECT version()").Scan(&version); err != nil {
@@ -30,6 +31,6 @@ func main() {
 
 	log.Println("Connected to:", version)
 
-	routes.StartServer()
+	routes.StartServer(conn)
 
 }
