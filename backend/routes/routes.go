@@ -21,86 +21,85 @@ func StartServer(conn *pgx.Conn) {
 		c.JSON(200, gin.H{"message": "This is a test message from the backend"})
 	})
 
-	
 	cfg := apiCfg{
 		db: database.New(conn),
 	}
-	r.GET("/test2",cfg.testMsg)
-	r.GET("/test3",cfg.testGetuser)
-	r.POST("/test4",cfg.testAdduser)
+	r.GET("/test3", cfg.testGetuser)
+	r.POST("/testAddUser", cfg.testAdduser)
 	r.Run(":8080")
 }
 
-type apiCfg struct{
-	db 	*database.Queries	 
+type apiCfg struct {
+	db *database.Queries
 	//platform string
 	//secret 	 string
 	//apikey   string
 }
 
-type user_json struct{
-	ID        pgtype.UUID `json:"id"`
+type user_json struct {
+	ID        pgtype.UUID      `json:"id"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
-	Email     string    `json:"email"`
-	Name	  string	`json:"name"`
+	Email     string           `json:"email"`
+	Name      string           `json:"name"`
 }
 
+func (cfg *apiCfg) testGetuser(c *gin.Context) {
 
-func (cfg *apiCfg) testMsg (c *gin.Context){
-	c.JSON(200, gin.H{"message": "This is a test message from the backend"})
-}
-
-func (cfg *apiCfg) testGetuser (c *gin.Context){
-
-	user_db,err:= cfg.db.GetAllUser(context.Background())
+	user_db, err := cfg.db.GetAllUser(context.Background())
 	if err != nil {
-		respondWithError(c.Writer,500,"can't get user database",err)
+		respondWithError(c.Writer, 500, "can't get user database", err)
 		return
 	}
 	var user []user_json
 	for _, user_val := range user_db {
 		user = append(user, user_json{
-			ID: user_val.ID,
+			ID:        user_val.ID,
 			CreatedAt: user_val.CreatedAt,
 			UpdatedAt: user_val.UpdatedAt,
-			Email: user_val.Email,
-			Name: user_val.Name,
+			Email:     user_val.Email,
+			Name:      user_val.Name,
 		})
 	}
 
-	respondWithJSON(c.Writer,http.StatusOK,user)
-
-
+	respondWithJSON(c.Writer, http.StatusOK, user)
 
 	//c.JSON(200, gin.H{"message": "This is a test message from the backend"})
 }
 
-func (cfg *apiCfg) testAdduser (c *gin.Context){
+func (cfg *apiCfg) testAdduser(c *gin.Context) {
+	var req struct {
+		Email    string `json:"email"`
+		Name     string `json:"name"`
+		Password string `json:"password"`
+	}
 
-	user_db,err:= cfg.db.CreateUser(context.Background(),database.CreateUserParams{
-		Email: "email1",
-		Name: "user1",
-		HashedPassword: "12345",
+	if err := c.ShouldBindJSON(&req); err != nil {
+		respondWithError(c.Writer, 400, "invalid request payload", err)
+		return
+	}
+
+	user_db, err := cfg.db.CreateUser(context.Background(), database.CreateUserParams{
+		Email:          req.Email,
+		Name:           req.Name,
+		HashedPassword: req.Password,
 	})
 	if err != nil {
-		respondWithError(c.Writer,500,"can't add user database",err)
+		respondWithError(c.Writer, 500, "can't add user database", err)
 		return
 	}
 
 	user := user_json{
-			ID: user_db.ID,
-			CreatedAt: user_db.CreatedAt,
-			UpdatedAt: user_db.UpdatedAt,
-			Email: user_db.Email,
-			Name: user_db.Name,
+		ID:        user_db.ID,
+		CreatedAt: user_db.CreatedAt,
+		UpdatedAt: user_db.UpdatedAt,
+		Email:     user_db.Email,
+		Name:      user_db.Name,
 	}
 
-	respondWithJSON(c.Writer,http.StatusOK,user)
+	respondWithJSON(c.Writer, http.StatusOK, user)
 
 }
-
-
 
 func respondWithError(w http.ResponseWriter, code int, msg string, err error) {
 	if err != nil {
