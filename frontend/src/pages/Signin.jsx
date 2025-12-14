@@ -62,7 +62,12 @@ export default function Signin() {
             </form>
             <DividerWithText text={"Don't have an account?"} />
             <div className='flex flex-col gap-5'>
-                <button className="border rounded-3xl px-10 py-2 text-center  self-center bg-gray-400 hover:bg-gray-50" >Sign Up</button>
+                <button
+                    className="border rounded-3xl px-10 py-2 text-center self-center bg-gray-400 hover:bg-gray-50"
+                    onClick={() => navigate('/signup')}
+                >
+                    Sign Up
+                </button>
                 <button className="border rounded-3xl px-10 py-2 text-center  self-center bg-gray-400 hover:bg-gray-50" >Google</button>
 
 
