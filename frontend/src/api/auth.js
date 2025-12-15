@@ -27,3 +27,8 @@ export const signUp = async (email, password, name) => {
         throw new Error(error.response?.data?.message || 'Failed to sign up');
     }
 };
+
+export const signOut = () => {
+  localStorage.removeItem('user');
+  localStorage.removeItem('token');
+};
