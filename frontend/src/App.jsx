@@ -6,13 +6,21 @@ import NavBar from './components/NavBar.jsx';
 import Signup from './pages/Signup.jsx';
 import SignupSuccess from './pages/Signup_success.jsx';
 import SignInSuccess from './pages/SignIN_success.jsx';
+import ProtectedRoute from './auth/ProtectedRoute.jsx';
+import Task from './pages/Task/Task.jsx';
 
 export default function App() {
     return (
         <BrowserRouter>
             <NavBar />
             <Routes>
-                <Route path="/test" element={<TestApi />} />
+
+
+                <Route element={<ProtectedRoute />}>
+                    <Route path="/test" element={<TestApi />} />
+                    <Route path="/task" element={<Task />} />
+
+                </Route>
                 <Route path="/" element={<Signin />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/signup/success" element={<SignupSuccess />} />

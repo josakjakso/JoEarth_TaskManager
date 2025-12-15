@@ -16,11 +16,11 @@ export default function Signin() {
         try {
             const response = await signIn(email, password);
 
-            console.log(response);
+            console.log('Sign In Response:', response);
 
+            localStorage.setItem('user', JSON.stringify(response));
 
-            // localStorage.setItem('token', data.token);
-            navigate('/signin/success');
+            navigate('/Task');
         } catch (err) {
             setError(err.message);
         }
