@@ -59,7 +59,7 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error){
 	if err != nil {
 		return uuid.Nil, err
 	}
-	if issuer != "chirpy" {
+	if issuer != "taskmanager" {
 		return uuid.Nil, errors.New("invalid issuer")
 	}
 

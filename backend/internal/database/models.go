@@ -5,9 +5,113 @@
 package database
 
 import (
+	"database/sql/driver"
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+type PriorityStatus string
+
+const (
+	PriorityStatusLow    PriorityStatus = "Low"
+	PriorityStatusMedium PriorityStatus = "Medium"
+	PriorityStatusHigh   PriorityStatus = "High"
+)
+
+func (e *PriorityStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PriorityStatus(s)
+	case string:
+		*e = PriorityStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PriorityStatus: %T", src)
+	}
+	return nil
+}
+
+type NullPriorityStatus struct {
+	PriorityStatus PriorityStatus
+	Valid          bool // Valid is true if PriorityStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPriorityStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.PriorityStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PriorityStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPriorityStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PriorityStatus), nil
+}
+
+type ProgessStatus string
+
+const (
+	ProgessStatusToDo      ProgessStatus = "To_do"
+	ProgessStatusInProgess ProgessStatus = "In_Progess"
+	ProgessStatusWaiting   ProgessStatus = "Waiting"
+	ProgessStatusDone      ProgessStatus = "Done"
+)
+
+func (e *ProgessStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ProgessStatus(s)
+	case string:
+		*e = ProgessStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ProgessStatus: %T", src)
+	}
+	return nil
+}
+
+type NullProgessStatus struct {
+	ProgessStatus ProgessStatus
+	Valid         bool // Valid is true if ProgessStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullProgessStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.ProgessStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ProgessStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullProgessStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ProgessStatus), nil
+}
+
+type Task struct {
+	ID          uuid.UUID
+	Title       string
+	Description string
+	Status      ProgessStatus
+	Priority    PriorityStatus
+	AssignedTo  uuid.UUID
+	CreatedBy   uuid.UUID
+	CreatedAt   pgtype.Timestamp
+	UpdatedAt   pgtype.Timestamp
+	StartDate   pgtype.Timestamp
+	DueDate     pgtype.Timestamp
+}
 
 type User struct {
 	ID             uuid.UUID

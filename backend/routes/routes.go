@@ -38,6 +38,7 @@ func StartServer(conn *pgx.Conn) {
 	r.GET("/test3", cfg.testGetuser)
 	r.POST("/testAddUser", cfg.testAdduser)
 	r.POST("/testlogin", cfg.testLogin)
+	r.POST("/testAddTask", cfg.testAddtask)
 	r.Run(":8080")
 }
 
@@ -176,6 +177,83 @@ func (cfg *apiCfg) testLogin(c *gin.Context) {
 		return
 	}
 }
+
+type task_json struct{
+	ID          uuid.UUID `json:"id"`
+	Title       string	`json:"title"`
+	Description string	`json:"description"`
+	Status      string	`json:"status"`
+	Priority    string	`json:"priority"`
+	AssignedTo  uuid.UUID	`json:"assigned_to"`
+	CreatedBy   uuid.UUID	`json:"created_by"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
+	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
+	StartDate 	pgtype.Timestamp `json:"start_date"`
+	DueDate     pgtype.Timestamp `json:"due_date"`
+}
+
+func (cfg *apiCfg) testAddtask(c *gin.Context){
+	type parameters struct {
+		Title 		string `json:"title"`
+		Description string	`json:"description"`
+		Status      string	`json:"status"`
+		Priority    string	`json:"priority"`
+		User_id   	uuid.UUID `json:"user_id"`
+		StartDate 	pgtype.Timestamp `json:"start_date"`
+		DueDate   	pgtype.Timestamp `json:"due_date"`
+	}
+	var params parameters
+
+
+	if  err := c.ShouldBindJSON(&params);err != nil {
+		respondWithError(c.Writer, http.StatusInternalServerError, "Couldn't decode parameters", err)
+		return
+	}
+
+	bearer_token ,err:= auth.GetBearerToken(c.Request.Header)
+	if err != nil {
+		respondWithError(c.Writer, http.StatusUnauthorized, "unauth bearer token", err)
+		return
+	}
+
+	valid_uid,err := auth.ValidateJWT(bearer_token,cfg.secret)
+	if err != nil {
+		respondWithError(c.Writer, http.StatusUnauthorized, "JWT invalid", err)
+		return
+	}	
+
+	task_db ,err := cfg.db.CreateTask(context.Background(),database.CreateTaskParams{
+		Title: params.Title,
+		Description: params.Description,
+		Status: database.ProgessStatus(params.Status),
+		Priority: database.PriorityStatus(params.Priority),
+		AssignedTo: params.User_id,
+		CreatedBy: valid_uid,
+		StartDate: params.StartDate,
+		DueDate: params.DueDate,})
+
+	if err != nil {
+		respondWithError(c.Writer, http.StatusInternalServerError, "Couldn't create user", err)
+		return
+	}
+
+	task := task_json{
+		ID: task_db.ID,
+		Title: task_db.Title,
+		Description: task_db.Description,
+		Status: string(task_db.Status),
+		Priority: string(task_db.Priority),
+		AssignedTo: task_db.AssignedTo,
+		CreatedBy: task_db.CreatedBy,
+		CreatedAt: task_db.CreatedAt,
+		UpdatedAt: task_db.UpdatedAt,
+		StartDate: task_db.StartDate,
+		DueDate: task_db.DueDate,
+	}
+
+	respondWithJSON(c.Writer, http.StatusCreated,task)
+}
+
 
 func respondWithError(w http.ResponseWriter, code int, msg string, err error) {
 	if err != nil {
