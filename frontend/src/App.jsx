@@ -5,6 +5,7 @@ import Signin from './pages/Signin';
 import NavBar from './components/NavBar.jsx';
 import Signup from './pages/Signup.jsx';
 import SignupSuccess from './pages/Signup_success.jsx';
+import SignInSuccess from './pages/SignIN_success.jsx';
 
 export default function App() {
     return (
@@ -15,6 +16,8 @@ export default function App() {
                 <Route path="/" element={<Signin />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/signup/success" element={<SignupSuccess />} />
+                <Route path="/signin/success" element={<SignInSuccess />} />
+
             </Routes>
         </BrowserRouter>
     );

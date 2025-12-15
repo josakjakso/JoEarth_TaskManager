@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DividerWithText from '../components/DividerWithText';
+import { signIn } from '../api/auth';
 
 export default function Signin() {
     const [email, setEmail] = useState('');
@@ -13,19 +14,13 @@ export default function Signin() {
         setError('');
 
         try {
-            const response = await fetch('/api/auth/signin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            });
+            const response = await signIn(email, password);
 
-            if (!response.ok) {
-                throw new Error('Invalid credentials');
-            }
+            console.log(response);
 
-            const data = await response.json();
-            localStorage.setItem('token', data.token);
-            navigate('/dashboard');
+
+            // localStorage.setItem('token', data.token);
+            navigate('/signin/success');
         } catch (err) {
             setError(err.message);
         }

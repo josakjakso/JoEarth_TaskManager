@@ -32,24 +32,24 @@ func StartServer(conn *pgx.Conn) {
 	}
 
 	cfg := apiCfg{
-		db: database.New(conn),
+		db:     database.New(conn),
 		secret: os.Getenv("SECRET"),
 	}
 	r.GET("/test3", cfg.testGetuser)
 	r.POST("/testAddUser", cfg.testAdduser)
-	r.POST("/testlogin",cfg.testLogin)
+	r.POST("/testlogin", cfg.testLogin)
 	r.Run(":8080")
 }
 
 type apiCfg struct {
 	db *database.Queries
 	//platform string
-	secret 	 string
+	secret string
 	//apikey   string
 }
 
 type user_json struct {
-	ID        uuid.UUID      `json:"id"`
+	ID        uuid.UUID        `json:"id"`
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 	Email     string           `json:"email"`
@@ -91,7 +91,7 @@ func (cfg *apiCfg) testAdduser(c *gin.Context) {
 		return
 	}
 
-	pass ,err := auth.HashPassword(req.Password)
+	pass, err := auth.HashPassword(req.Password)
 	if err != nil {
 		respondWithError(c.Writer, http.StatusInternalServerError, "password hash error", err)
 		return
@@ -119,10 +119,10 @@ func (cfg *apiCfg) testAdduser(c *gin.Context) {
 
 }
 
-func (cfg *apiCfg) testLogin (c *gin.Context){
+func (cfg *apiCfg) testLogin(c *gin.Context) {
 	type req struct {
-		Email 	  string `json:"email"`
-		Password  string `json:"password"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 		//ExpiresIn int `json:"expires_in_seconds"`
 	}
 
@@ -139,20 +139,20 @@ func (cfg *apiCfg) testLogin (c *gin.Context){
 		return
 	}
 
-	user_db , err := cfg.db.GetUserByEmail(context.Background(),params.Email)
+	user_db, err := cfg.db.GetUserByEmail(context.Background(), params.Email)
 	if err != nil {
 		respondWithError(c.Writer, http.StatusUnauthorized, "Incorrect email or password", err)
 		return
 	}
 
-	pass_match ,err := auth.CheckPasswordHash(params.Password,user_db.HashedPassword)
+	pass_match, err := auth.CheckPasswordHash(params.Password, user_db.HashedPassword)
 	if err != nil {
-		respondWithError(c.Writer, http.StatusInternalServerError, "Something went wrong", err)
+		respondWithError(c.Writer, http.StatusInternalServerError, "Incorrect email or password", err)
 		return
 	}
 	if pass_match {
 		duration := time.Hour
-		ac_token , err := auth.MakeJWT(user_db.ID,cfg.secret,duration)
+		ac_token, err := auth.MakeJWT(user_db.ID, cfg.secret, duration)
 		if err != nil {
 			respondWithError(c.Writer, http.StatusInternalServerError, "make JWT auth err", err)
 			return
@@ -167,11 +167,11 @@ func (cfg *apiCfg) testLogin (c *gin.Context){
 		}
 		token_response := response{
 			user_json: user,
-			Token: ac_token,
+			Token:     ac_token,
 			//RefreshToken: rf_db.Token,
 		}
-		respondWithJSON(c.Writer,http.StatusOK,token_response)
-	}else {
+		respondWithJSON(c.Writer, http.StatusOK, token_response)
+	} else {
 		respondWithError(c.Writer, http.StatusUnauthorized, "Incorrect email or password", nil)
 		return
 	}
