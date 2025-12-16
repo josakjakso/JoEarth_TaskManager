@@ -7,24 +7,29 @@ import Signup from './pages/Signup.jsx';
 import SignupSuccess from './pages/Signup_success.jsx';
 import SignInSuccess from './pages/SignIN_success.jsx';
 import ProtectedRoute from './auth/ProtectedRoute.jsx';
-import Task from './pages/Task/Task.jsx';
+import Task from './pages/Task_Page/Task.jsx';
+import Sidebar from './components/sideBar.jsx';
+import MainLayout from './components/MainLayout.jsx';
 
 export default function App() {
     return (
         <BrowserRouter>
             <NavBar />
             <Routes>
-
-
-                <Route element={<ProtectedRoute />}>
-                    <Route path="/test" element={<TestApi />} />
-                    <Route path="/task" element={<Task />} />
-
-                </Route>
                 <Route path="/" element={<Signin />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/signup/success" element={<SignupSuccess />} />
                 <Route path="/signin/success" element={<SignInSuccess />} />
+
+                <Route element={<MainLayout />}>
+                    <Route element={<ProtectedRoute />}>
+                        <Route path="/test" element={<TestApi />} />
+                        <Route path="/task" element={<Task />} />
+
+                    </Route>
+                </Route>
+
+
 
             </Routes>
         </BrowserRouter>
