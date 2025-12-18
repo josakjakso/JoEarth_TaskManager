@@ -21,7 +21,13 @@ import (
 
 func StartServer(conn *pgx.Conn) {
 	r := gin.Default()
-	r.Use(cors.Default())
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Content-Type", "Authorization"},
+		AllowCredentials: true, // ⭐ สำคัญมาก
+	}))
+
 	r.GET("/test", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "This is a test message from the backend"})
 	})
@@ -39,8 +45,8 @@ func StartServer(conn *pgx.Conn) {
 	r.POST("/testAddUser", cfg.testAdduser)
 	r.POST("/testlogin", cfg.testLogin)
 	r.POST("/testAddTask", cfg.testAddtask)
-	r.POST("/testRefresh",cfg.refreshEndpoint)
-	r.POST("/testRevoke",cfg.revokeEndpoint)
+	r.POST("/testRefresh", cfg.refreshEndpoint)
+	r.POST("/testRevoke", cfg.revokeEndpoint)
 	r.Run(":8080")
 }
 
@@ -161,19 +167,19 @@ func (cfg *apiCfg) testLogin(c *gin.Context) {
 			return
 		}
 
-		refresh_token ,err:= auth.MakeRefreshToken()
+		refresh_token, err := auth.MakeRefreshToken()
 		if err != nil {
 			respondWithError(c.Writer, http.StatusInternalServerError, "make refresh token auth err", err)
 			return
 		}
 
-		refresh_db,err := cfg.db.CreateRefresh_tokens(context.Background(),database.CreateRefresh_tokensParams{
-			Token: refresh_token,
+		refresh_db, err := cfg.db.CreateRefresh_tokens(context.Background(), database.CreateRefresh_tokensParams{
+			Token:  refresh_token,
 			UserID: user_db.ID,
 		})
 		if err != nil {
-		respondWithError(c.Writer, http.StatusInternalServerError, "Something went wrong with refresh token", err)
-		return
+			respondWithError(c.Writer, http.StatusInternalServerError, "Something went wrong with refresh token", err)
+			return
 
 		}
 
@@ -185,11 +191,11 @@ func (cfg *apiCfg) testLogin(c *gin.Context) {
 			Name:      user_db.Name,
 		}
 		token_response := response{
-			user_json: user,
-			Token:     ac_token,
+			user_json:    user,
+			Token:        ac_token,
 			RefreshToken: refresh_db.Token,
 		}
-		c.SetCookie("Token",ac_token,60,"/","",false,true)
+		c.SetCookie("Token", ac_token, 60, "/", "", false, true)
 		respondWithJSON(c.Writer, http.StatusOK, token_response)
 	} else {
 		respondWithError(c.Writer, http.StatusUnauthorized, "Incorrect email or password", nil)
@@ -197,59 +203,58 @@ func (cfg *apiCfg) testLogin(c *gin.Context) {
 	}
 }
 
-type task_json struct{
-	ID          uuid.UUID `json:"id"`
-	Title       string	`json:"title"`
-	Description string	`json:"description"`
-	Status      string	`json:"status"`
-	Priority    string	`json:"priority"`
-	AssignedTo  uuid.UUID	`json:"assigned_to"`
-	CreatedBy   uuid.UUID	`json:"created_by"`
+type task_json struct {
+	ID          uuid.UUID        `json:"id"`
+	Title       string           `json:"title"`
+	Description string           `json:"description"`
+	Status      string           `json:"status"`
+	Priority    string           `json:"priority"`
+	AssignedTo  uuid.UUID        `json:"assigned_to"`
+	CreatedBy   uuid.UUID        `json:"created_by"`
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
-	StartDate 	pgtype.Timestamp `json:"start_date"`
+	StartDate   pgtype.Timestamp `json:"start_date"`
 	DueDate     pgtype.Timestamp `json:"due_date"`
 }
 
-func (cfg *apiCfg) testAddtask (c *gin.Context){
+func (cfg *apiCfg) testAddtask(c *gin.Context) {
 	type parameters struct {
-		Title 		string `json:"title"`
-		Description string	`json:"description"`
-		Status      string	`json:"status"`
-		Priority    string	`json:"priority"`
-		User_id   	uuid.UUID `json:"user_id"`
-		StartDate 	pgtype.Timestamp `json:"start_date"`
-		DueDate   	pgtype.Timestamp `json:"due_date"`
+		Title       string           `json:"title"`
+		Description string           `json:"description"`
+		Status      string           `json:"status"`
+		Priority    string           `json:"priority"`
+		User_id     uuid.UUID        `json:"user_id"`
+		StartDate   pgtype.Timestamp `json:"start_date"`
+		DueDate     pgtype.Timestamp `json:"due_date"`
 	}
 	var params parameters
 
-
-	if  err := c.ShouldBindJSON(&params);err != nil {
+	if err := c.ShouldBindJSON(&params); err != nil {
 		respondWithError(c.Writer, http.StatusInternalServerError, "Couldn't decode parameters", err)
 		return
 	}
 
-	bearer_token ,err:= auth.GetBearerToken(c.Request.Header)
+	bearer_token, err := auth.GetBearerToken(c.Request.Header)
 	if err != nil {
 		respondWithError(c.Writer, http.StatusUnauthorized, "unauth bearer token", err)
 		return
 	}
 
-	valid_uid,err := auth.ValidateJWT(bearer_token,cfg.secret)
+	valid_uid, err := auth.ValidateJWT(bearer_token, cfg.secret)
 	if err != nil {
 		respondWithError(c.Writer, http.StatusUnauthorized, "JWT invalid", err)
 		return
-	}	
+	}
 
-	task_db ,err := cfg.db.CreateTask(context.Background(),database.CreateTaskParams{
-		Title: params.Title,
+	task_db, err := cfg.db.CreateTask(context.Background(), database.CreateTaskParams{
+		Title:       params.Title,
 		Description: params.Description,
-		Status: database.ProgessStatus(params.Status),
-		Priority: database.PriorityStatus(params.Priority),
-		AssignedTo: params.User_id,
-		CreatedBy: valid_uid,
-		StartDate: params.StartDate,
-		DueDate: params.DueDate,})
+		Status:      database.ProgessStatus(params.Status),
+		Priority:    database.PriorityStatus(params.Priority),
+		AssignedTo:  params.User_id,
+		CreatedBy:   valid_uid,
+		StartDate:   params.StartDate,
+		DueDate:     params.DueDate})
 
 	if err != nil {
 		respondWithError(c.Writer, http.StatusInternalServerError, "Couldn't create user", err)
@@ -257,22 +262,21 @@ func (cfg *apiCfg) testAddtask (c *gin.Context){
 	}
 
 	task := task_json{
-		ID: task_db.ID,
-		Title: task_db.Title,
+		ID:          task_db.ID,
+		Title:       task_db.Title,
 		Description: task_db.Description,
-		Status: string(task_db.Status),
-		Priority: string(task_db.Priority),
-		AssignedTo: task_db.AssignedTo,
-		CreatedBy: task_db.CreatedBy,
-		CreatedAt: task_db.CreatedAt,
-		UpdatedAt: task_db.UpdatedAt,
-		StartDate: task_db.StartDate,
-		DueDate: task_db.DueDate,
+		Status:      string(task_db.Status),
+		Priority:    string(task_db.Priority),
+		AssignedTo:  task_db.AssignedTo,
+		CreatedBy:   task_db.CreatedBy,
+		CreatedAt:   task_db.CreatedAt,
+		UpdatedAt:   task_db.UpdatedAt,
+		StartDate:   task_db.StartDate,
+		DueDate:     task_db.DueDate,
 	}
 
-	respondWithJSON(c.Writer, http.StatusCreated,task)
+	respondWithJSON(c.Writer, http.StatusCreated, task)
 }
-
 
 func respondWithError(w http.ResponseWriter, code int, msg string, err error) {
 	if err != nil {
@@ -305,15 +309,14 @@ func (cfg *apiCfg) refreshEndpoint(c *gin.Context) {
 	type returnVals struct {
 		Token string `json:"token"`
 	}
-	
-	
-	refresh_token,err := auth.GetBearerToken(c.Request.Header)
+
+	refresh_token, err := auth.GetBearerToken(c.Request.Header)
 	if err != nil {
 		respondWithError(c.Writer, http.StatusBadRequest, "Couldn't find token", err)
 		return
 	}
 
-	user_db, err := cfg.db.GetUserFromRefreshToken(context.Background(),refresh_token)
+	user_db, err := cfg.db.GetUserFromRefreshToken(context.Background(), refresh_token)
 	if err != nil {
 		respondWithError(c.Writer, http.StatusUnauthorized, "Couldn't get user Refresh token", err)
 		return
@@ -325,7 +328,7 @@ func (cfg *apiCfg) refreshEndpoint(c *gin.Context) {
 	//	return
 	//}
 
-	new_access_token,err := auth.MakeJWT(user_db.ID,cfg.secret,time.Hour)
+	new_access_token, err := auth.MakeJWT(user_db.ID, cfg.secret, time.Hour)
 	if err != nil {
 		respondWithError(c.Writer, http.StatusInternalServerError, "something wrong with make JWT", err)
 		return
@@ -334,24 +337,24 @@ func (cfg *apiCfg) refreshEndpoint(c *gin.Context) {
 		Token: new_access_token,
 	}
 
-	respondWithJSON(c.Writer, http.StatusOK,value)
-	
+	respondWithJSON(c.Writer, http.StatusOK, value)
+
 }
 
-func (cfg *apiCfg) revokeEndpoint (c *gin.Context) {
-	
-	rf_token,err := auth.GetBearerToken(c.Request.Header)
+func (cfg *apiCfg) revokeEndpoint(c *gin.Context) {
+
+	rf_token, err := auth.GetBearerToken(c.Request.Header)
 	if err != nil {
 		respondWithError(c.Writer, http.StatusBadRequest, "Couldn't find token", err)
 		return
 	}
 
-	err = cfg.db.UpdateRefreshTokenRevoke(context.Background(),rf_token)
+	err = cfg.db.UpdateRefreshTokenRevoke(context.Background(), rf_token)
 	if err != nil {
 		respondWithError(c.Writer, http.StatusUnauthorized, "Couldn't Revoke refresh token", err)
 		return
 	}
 
-	respondWithJSON(c.Writer, http.StatusNoContent,nil)
-	
+	respondWithJSON(c.Writer, http.StatusNoContent, nil)
+
 }
