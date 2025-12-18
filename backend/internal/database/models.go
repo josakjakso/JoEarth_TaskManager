@@ -141,6 +141,15 @@ func (ns NullRoles) Value() (driver.Value, error) {
 	return string(ns.Roles), nil
 }
 
+type RefreshToken struct {
+	Token     string
+	CreatedAt pgtype.Timestamp
+	UpdatedAt pgtype.Timestamp
+	UserID    uuid.UUID
+	ExpiresAt pgtype.Timestamp
+	RevokedAt pgtype.Timestamp
+}
+
 type Task struct {
 	ID          uuid.UUID
 	Title       string
