@@ -189,6 +189,7 @@ func (cfg *apiCfg) testLogin(c *gin.Context) {
 			Token:     ac_token,
 			RefreshToken: refresh_db.Token,
 		}
+		c.SetCookie("Token",ac_token,60,"/","",false,true)
 		respondWithJSON(c.Writer, http.StatusOK, token_response)
 	} else {
 		respondWithError(c.Writer, http.StatusUnauthorized, "Incorrect email or password", nil)
