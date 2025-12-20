@@ -10,8 +10,10 @@ export const signIn = async (email, password) => {
             password,
         },
     {
-        withCredentials: true, // ⭐ สำคัญ
+        withCredentials: true, 
       });
+        const { refresh_token } = response.data;
+        localStorage.setItem('ref_token', refresh_token); // เก็บไว้ส่งใน Header
         return response.data;
     } catch (error) {
         throw new Error(error.response?.data?.message || 'Failed to sign in');

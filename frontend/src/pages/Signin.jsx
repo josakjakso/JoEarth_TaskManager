@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DividerWithText from '../components/DividerWithText';
 import { signIn } from '../api/auth';
+import { useAuth } from '../context/AuthContext';
 
 export default function Signin() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const { setUser } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -15,11 +17,7 @@ export default function Signin() {
 
         try {
             const response = await signIn(email, password);
-
-            console.log('Sign In Response:', response);
-
-            localStorage.setItem('user', JSON.stringify(response));
-
+            // setUser(response);
             navigate('/Task');
         } catch (err) {
             setError(err.message);

@@ -47,6 +47,7 @@ func StartServer(conn *pgx.Conn) {
 	r.POST("/testAddTask", cfg.testAddtask)
 	r.POST("/testRefresh", cfg.refreshEndpoint)
 	r.POST("/testRevoke", cfg.revokeEndpoint)
+	r.GET("/auth/me", cfg.handlerMe)
 	r.Run(":8080")
 }
 
@@ -160,7 +161,7 @@ func (cfg *apiCfg) testLogin(c *gin.Context) {
 		return
 	}
 	if pass_match {
-		duration := time.Hour
+		duration := time.Minute
 		ac_token, err := auth.MakeJWT(user_db.ID, cfg.secret, duration)
 		if err != nil {
 			respondWithError(c.Writer, http.StatusInternalServerError, "make JWT auth err", err)
@@ -195,7 +196,7 @@ func (cfg *apiCfg) testLogin(c *gin.Context) {
 			Token:        ac_token,
 			RefreshToken: refresh_db.Token,
 		}
-		c.SetCookie("Token", ac_token, 60, "/", "", false, true)
+		c.SetCookie("ac_token", ac_token, 600, "/", "", false, true)
 		respondWithJSON(c.Writer, http.StatusOK, token_response)
 	} else {
 		respondWithError(c.Writer, http.StatusUnauthorized, "Incorrect email or password", nil)
@@ -357,4 +358,38 @@ func (cfg *apiCfg) revokeEndpoint(c *gin.Context) {
 
 	respondWithJSON(c.Writer, http.StatusNoContent, nil)
 
+}
+
+func (cfg *apiCfg) handlerMe(c *gin.Context) {
+	// 1. ดึง Token จาก Cookie (ใช้ฟังก์ชันที่คุณเขียนไว้ใน auth package)
+	tokenString, err := c.Cookie("ac_token")
+	if err != nil {
+		respondWithError(c.Writer, http.StatusUnauthorized, "No access token found", err)
+		return
+	}
+
+	// 2. ตรวจสอบความถูกต้องของ JWT
+	userID, err := auth.ValidateJWT(tokenString, cfg.secret)
+	if err != nil {
+		respondWithError(c.Writer, http.StatusUnauthorized, "Invalid token", err)
+		return
+	}
+
+	// 3. ดึงข้อมูล User จาก Database โดยใช้ sqlc
+	user_db, err := cfg.db.GetUserByID(context.Background(), userID)
+	if err != nil {
+		respondWithError(c.Writer, http.StatusNotFound, "User not found", err)
+		return
+	}
+
+	// 4. แปลงข้อมูลเป็น JSON format ที่เราต้องการส่งกลับ
+	user := user_json{
+		ID:        user_db.ID,
+		CreatedAt: user_db.CreatedAt,
+		UpdatedAt: user_db.UpdatedAt,
+		Email:     user_db.Email,
+		Name:      user_db.Name,
+	}
+
+	respondWithJSON(c.Writer, http.StatusOK, user)
 }

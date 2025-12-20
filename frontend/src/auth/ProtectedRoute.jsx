@@ -1,16 +1,19 @@
-// ProtectedRoute.js
+// src/auth/ProtectedRoute.jsx
 import { Navigate, Outlet } from 'react-router-dom';
-import { isAuthenticated } from './isAuthenticated';
+import { useAuth } from '../context/AuthContext';
 
-const ProtectedRoute = ({ children }) => {
-  const auth = isAuthenticated();
+const ProtectedRoute = () => {
+  const { user, isLoading } = useAuth();
 
-  if (!auth) {
+  console.log("Protected Route - User:", user);
+  console.log("Protected Route - Loading:", isLoading);
 
-    return <Navigate to="/" replace />;
+  if (isLoading) {
+    return <div>Loading...</div>; // หรือใส่ Component Spinner ของคุณ
   }
 
-  return children ? children : <Outlet />;
+  // ถ้าไม่มี User (ไม่ได้ Login หรือ Token หมดอายุ) ให้เด้งไปหน้า Signin
+  return user ? <Outlet /> : <Navigate to="/" replace />;
 };
 
 export default ProtectedRoute;
