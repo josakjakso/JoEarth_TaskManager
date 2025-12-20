@@ -25,7 +25,7 @@ func StartServer(conn *pgx.Conn) {
 		AllowOrigins:     []string{"http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
 		AllowHeaders:     []string{"Content-Type", "Authorization"},
-		AllowCredentials: true, // ⭐ สำคัญมาก
+		AllowCredentials: true,
 	}))
 
 	r.GET("/test", func(c *gin.Context) {
@@ -55,6 +55,7 @@ type apiCfg struct {
 	db *database.Queries
 	//platform string
 	secret string
+	user user_json
 	//apikey   string
 }
 
@@ -161,7 +162,7 @@ func (cfg *apiCfg) testLogin(c *gin.Context) {
 		return
 	}
 	if pass_match {
-		duration := time.Minute
+		duration := time.Second * 60
 		ac_token, err := auth.MakeJWT(user_db.ID, cfg.secret, duration)
 		if err != nil {
 			respondWithError(c.Writer, http.StatusInternalServerError, "make JWT auth err", err)
@@ -196,7 +197,13 @@ func (cfg *apiCfg) testLogin(c *gin.Context) {
 			Token:        ac_token,
 			RefreshToken: refresh_db.Token,
 		}
-		c.SetCookie("ac_token", ac_token, 600, "/", "", false, true)
+
+		cfg.user = user
+		c.SetCookie("ac_token", ac_token, 60, "/", "", false, true)
+
+		
+
+
 		respondWithJSON(c.Writer, http.StatusOK, token_response)
 	} else {
 		respondWithError(c.Writer, http.StatusUnauthorized, "Incorrect email or password", nil)
@@ -361,35 +368,48 @@ func (cfg *apiCfg) revokeEndpoint(c *gin.Context) {
 }
 
 func (cfg *apiCfg) handlerMe(c *gin.Context) {
-	// 1. ดึง Token จาก Cookie (ใช้ฟังก์ชันที่คุณเขียนไว้ใน auth package)
-	tokenString, err := c.Cookie("ac_token")
-	if err != nil {
-		respondWithError(c.Writer, http.StatusUnauthorized, "No access token found", err)
+
+	if code,msg,err := cfg.cookieHandler(c); err != nil{
+		respondWithError(c.Writer,code,msg,err)
 		return
 	}
 
-	// 2. ตรวจสอบความถูกต้องของ JWT
-	userID, err := auth.ValidateJWT(tokenString, cfg.secret)
-	if err != nil {
-		respondWithError(c.Writer, http.StatusUnauthorized, "Invalid token", err)
-		return
-	}
+	//old way waste of time
+	//user_db, err := cfg.db.GetUserByID(context.Background(), cfg.user.ID)
+	//if err != nil {
+	//	respondWithError(c.Writer, http.StatusNotFound, "User not found", err)
+	//	return
+	//}
 
-	// 3. ดึงข้อมูล User จาก Database โดยใช้ sqlc
-	user_db, err := cfg.db.GetUserByID(context.Background(), userID)
-	if err != nil {
-		respondWithError(c.Writer, http.StatusNotFound, "User not found", err)
-		return
-	}
-
-	// 4. แปลงข้อมูลเป็น JSON format ที่เราต้องการส่งกลับ
 	user := user_json{
-		ID:        user_db.ID,
-		CreatedAt: user_db.CreatedAt,
-		UpdatedAt: user_db.UpdatedAt,
-		Email:     user_db.Email,
-		Name:      user_db.Name,
+		ID:        cfg.user.ID,
+		CreatedAt: cfg.user.CreatedAt,
+		UpdatedAt: cfg.user.UpdatedAt,
+		Email:     cfg.user.Email,
+		Name:      cfg.user.Name,
 	}
 
 	respondWithJSON(c.Writer, http.StatusOK, user)
+}
+
+func (cfg *apiCfg) cookieHandler (c *gin.Context) (httpcode int,msg string,err error){
+	
+	access_token, err := c.Cookie("ac_token")
+	if err != nil {
+		//respondWithError(c.Writer, http.StatusUnauthorized, "No access token found", err)
+		return  http.StatusUnauthorized, "No cookie access token found", err
+	}
+
+	_, err = auth.ValidateJWT(access_token, cfg.secret)
+	if err != nil {
+		//respondWithError(c.Writer, http.StatusUnauthorized, "Invalid token", err)
+		return http.StatusUnauthorized, "Invalid token", err
+	}
+
+	//if user_id != cfg.user.ID {
+	//	return http.StatusUnauthorized, "hey what r u trying to do man", err
+	//}
+
+	return
+
 }
