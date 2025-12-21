@@ -27,9 +27,9 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         if (user) {
-            console.log("User Data Updated:", user);
+            console.log("User Data Updated from checkAuthStatus:", user);
         } else {
-            console.log("No User Logged In");
+            console.log("No User Logged In from checkAuthStatus:");
         }
     }, [user]);
 

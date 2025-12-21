@@ -4,6 +4,8 @@ import DividerWithText from '../components/DividerWithText';
 import { signIn } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 
+
+
 export default function Signin() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -17,7 +19,9 @@ export default function Signin() {
 
         try {
             const response = await signIn(email, password);
-            // setUser(response);
+            const { token, refresh_token, ...userData } = response
+            console.log('Sign In Successful from signin :', userData);
+            setUser(userData); // อัปเดตสถานะผู้ใช้ใน Context
             navigate('/Task');
         } catch (err) {
             setError(err.message);
