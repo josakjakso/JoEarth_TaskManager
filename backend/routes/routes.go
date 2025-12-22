@@ -235,6 +235,12 @@ func (cfg *apiCfg) testAddtask(c *gin.Context) {
 		StartDate   pgtype.Timestamp `json:"start_date"`
 		DueDate     pgtype.Timestamp `json:"due_date"`
 	}
+
+	if code,msg,err := cfg.cookieHandler(c); err != nil{
+		respondWithError(c.Writer,code,msg,err)
+		return
+	}
+
 	var params parameters
 
 	if err := c.ShouldBindJSON(&params); err != nil {
@@ -242,7 +248,7 @@ func (cfg *apiCfg) testAddtask(c *gin.Context) {
 		return
 	}
 
-	bearer_token, err := auth.GetBearerToken(c.Request.Header)
+	/*bearer_token, err := auth.GetBearerToken(c.Request.Header)
 	if err != nil {
 		respondWithError(c.Writer, http.StatusUnauthorized, "unauth bearer token", err)
 		return
@@ -252,7 +258,7 @@ func (cfg *apiCfg) testAddtask(c *gin.Context) {
 	if err != nil {
 		respondWithError(c.Writer, http.StatusUnauthorized, "JWT invalid", err)
 		return
-	}
+	}*/
 
 	task_db, err := cfg.db.CreateTask(context.Background(), database.CreateTaskParams{
 		Title:       params.Title,
@@ -260,7 +266,7 @@ func (cfg *apiCfg) testAddtask(c *gin.Context) {
 		Status:      database.ProgessStatus(params.Status),
 		Priority:    database.PriorityStatus(params.Priority),
 		AssignedTo:  params.User_id,
-		CreatedBy:   valid_uid,
+		CreatedBy:   cfg.user.ID,
 		StartDate:   params.StartDate,
 		DueDate:     params.DueDate})
 
@@ -400,15 +406,15 @@ func (cfg *apiCfg) cookieHandler (c *gin.Context) (httpcode int,msg string,err e
 		return  http.StatusUnauthorized, "No cookie access token found", err
 	}
 
-	_, err = auth.ValidateJWT(access_token, cfg.secret)
+	user_id, err := auth.ValidateJWT(access_token, cfg.secret)
 	if err != nil {
 		//respondWithError(c.Writer, http.StatusUnauthorized, "Invalid token", err)
 		return http.StatusUnauthorized, "Invalid token", err
 	}
 
-	//if user_id != cfg.user.ID {
-	//	return http.StatusUnauthorized, "hey what r u trying to do man", err
-	//}
+	if user_id != cfg.user.ID {
+		return http.StatusUnauthorized, "hey what r u trying to do man", err
+	}
 
 	return
 
