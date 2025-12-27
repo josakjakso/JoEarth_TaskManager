@@ -25,3 +25,14 @@ export const addTask = async (title, description, assignedTo, startDate, dueDate
     }
 };
 
+export const getTasks = async () => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/testTask`, {
+        withCredentials: true, 
+      });
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Failed to fetch tasks');
+    } 
+};
+

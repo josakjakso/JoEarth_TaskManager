@@ -2,17 +2,27 @@ import React from 'react';
 import bread from '../assets/pic/bread.png';
 import { signOut } from '../api/auth';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 
 export default function NavBar() {
-    const data = JSON.parse(localStorage.getItem('user'));
-    const name = data ? data.name : null;
     const navigate = useNavigate();
+    const { user, setUser } = useAuth();
+    const isUserLoggedIn = user && user.id !== "00000000-0000-0000-0000-000000000000";
+    const handleLogout = async () => {
+        try {
+            const response = await signOut();
+            console.log("Logout response:", response);
+        } catch (err) {
+            console.error("Logout error:", err);
+        } finally {
 
 
-    const handleLogout = () => {
-        signOut();
-        navigate('/');
+            localStorage.removeItem('ref_token');
+
+            setUser(null);
+            navigate('/');
+        }
     };
     return (
         <nav className="fixed top-0 left-0 w-full bg-gray-500">
@@ -34,16 +44,16 @@ export default function NavBar() {
                         <div>
                         </div>
                     </div>
-                    {name && (
+                    {isUserLoggedIn && user.id && (
 
                         <div className="flex items-end">
-                            <a href="#" className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white">{name}</a>
+                            <a href="#" className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white">{user.name}</a>
                             <a href="#" className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white" onClick={handleLogout}>signOut</a>
 
                         </div>
 
                     )}
-                    {!name && (
+                    {!isUserLoggedIn && (
                         <div className="flex items-end">
                             <a href="#" className="rounded-md px-3 py-2 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white">signIn</a>
 

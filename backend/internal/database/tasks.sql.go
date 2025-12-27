@@ -81,3 +81,55 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 	)
 	return i, err
 }
+
+const getAllTasks = `-- name: GetAllTasks :many
+SELECT tasks.id, tasks.title, tasks.description, tasks.status, tasks.priority, tasks.assigned_to, tasks.created_by, tasks.created_at, tasks.updated_at, tasks.start_date, tasks.due_date , users.name FROM tasks  JOIN users ON tasks.assigned_to = users.id
+`
+
+type GetAllTasksRow struct {
+	ID          uuid.UUID
+	Title       string
+	Description string
+	Status      ProgessStatus
+	Priority    PriorityStatus
+	AssignedTo  uuid.UUID
+	CreatedBy   uuid.UUID
+	CreatedAt   pgtype.Timestamp
+	UpdatedAt   pgtype.Timestamp
+	StartDate   pgtype.Timestamp
+	DueDate     pgtype.Timestamp
+	Name        string
+}
+
+func (q *Queries) GetAllTasks(ctx context.Context) ([]GetAllTasksRow, error) {
+	rows, err := q.db.Query(ctx, getAllTasks)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllTasksRow
+	for rows.Next() {
+		var i GetAllTasksRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Description,
+			&i.Status,
+			&i.Priority,
+			&i.AssignedTo,
+			&i.CreatedBy,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.StartDate,
+			&i.DueDate,
+			&i.Name,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

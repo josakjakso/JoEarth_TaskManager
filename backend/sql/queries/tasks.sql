@@ -27,3 +27,6 @@ VALUES
         $7,
         $8
     ) RETURNING *;
+
+-- name: GetAllTasks :many
+SELECT tasks.* , users.name FROM tasks  JOIN users ON tasks.assigned_to = users.id; 

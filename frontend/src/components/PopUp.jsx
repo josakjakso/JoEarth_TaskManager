@@ -5,8 +5,8 @@ function PopUp({ showPopUp, closePopUp, children }) {
     if (!showPopUp) { return null }
     return (
         <div className="PopUp" >
-            <div className='flex justify-end w-full pr-4 pt-2'>
-                <button onClick={closePopUp}>close</button>
+            <div className='flex justify-end w-full pr-4 pt-2 select-none'>
+                <button onClick={closePopUp}>X</button>
             </div>
             <div>
                 {children}

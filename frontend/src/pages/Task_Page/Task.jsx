@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { mockTasks } from '../../models/mockTask.js';
 import { useState } from 'react';
 import PopUp from '../../components/PopUp.jsx';
 import formatDate from '../../components/foramatDate.jsx';
 import { addTask } from '../../api/task.js';
+import { getTasks } from '../../api/task.js';
 export default function TaskTable() {
     const [showPopUp, setShowPopUp] = useState(false)
     const [error, setError] = useState('');
+    const [tasks, setTasks] = useState([]);
 
     const handleDropdown = (e) => {
         const { name, value } = e.target;
@@ -38,6 +40,18 @@ export default function TaskTable() {
         }
     }
 
+    useEffect(() => {
+        const task = async () => {
+            try {
+                const data = await getTasks();
+                setTasks(data);
+            } catch (err) {
+                console.error('Failed to fetch tasks:', err);
+            }
+        };
+        task();
+    }, []);
+
 
     return (
         <div className="p-6 ">
@@ -57,11 +71,12 @@ export default function TaskTable() {
                             <th className="border px-3 py-2">Assigned To</th>
                             <th className="border px-3 py-2">Start Date</th>
                             <th className="border px-3 py-2">Due Date</th>
+                            <th className="border px-3 py-2"></th>
                         </tr>
                     </thead>
 
                     <tbody>
-                        {mockTasks.map((task) => (
+                        {tasks.map((task) => (
                             <tr key={task.id} className="hover:bg-gray-50">
                                 <td className="border px-3 py-2">
                                     <div className="font-medium">{task.title}</div>
@@ -79,16 +94,20 @@ export default function TaskTable() {
                                 </td>
 
                                 <td className="border px-3 py-2 text-center">
-                                    {task.assignedTo}
+                                    {task.name}
                                 </td>
 
                                 <td className="border px-3 py-2 text-center">
-                                    {formatDate(task.startDate) ?? '-'}
+                                    {formatDate(task.start_date) ?? '-'}
                                 </td>
 
                                 <td className="border px-3 py-2 text-center">
-                                    {formatDate(task.dueDate) ?? '-'}
+                                    {formatDate(task.due_date) ?? '-'}
                                 </td>
+                                <td className="border px-3 py-2 text-center">
+                                    <button className='border rounded px-1 py-1'>delete</button>
+                                </td>
+
                             </tr>
                         ))}
                     </tbody>
@@ -190,9 +209,9 @@ function addTaskform(handleSubmit, form, setForm, handleDropdown) {
 /** @param {{ status: import('../types/task').ProgressStatus }} props */
 function StatusBadge({ status }) {
     const map = {
-        to_do: 'bg-gray-200 text-gray-800',
-        in_progress: 'bg-blue-200 text-blue-800',
-        done: 'bg-green-200 text-green-800',
+        To_do: 'bg-gray-200 text-gray-800',
+        In_Progess: 'bg-blue-200 text-blue-800',
+        Done: 'bg-green-200 text-green-800',
     };
 
     return (
@@ -205,9 +224,9 @@ function StatusBadge({ status }) {
 /** @param {{ priority: import('../types/task').PriorityStatus }} props */
 function PriorityBadge({ priority }) {
     const map = {
-        low: 'bg-green-100 text-green-800',
-        medium: 'bg-yellow-100 text-yellow-800',
-        high: 'bg-red-100 text-red-800',
+        Low: 'bg-green-100 text-green-800',
+        Medium: 'bg-yellow-100 text-yellow-800',
+        High: 'bg-red-100 text-red-800',
     };
 
     return (

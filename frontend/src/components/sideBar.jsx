@@ -3,7 +3,6 @@ import { NavLink, useNavigate } from 'react-router-dom';
 
 export default function Sidebar({ isOpen, setIsOpen }) {
     const navigate = useNavigate();
-    const user = JSON.parse(localStorage.getItem('user'));
 
 
 
@@ -35,7 +34,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
 
             {/* Menu */}
             <nav className="mt-4 space-y-1 px-2">
-                <SideItem to="/tasks/table" label="Tasks" isOpen={isOpen} />
+                <SideItem to="/tasks" label="Tasks" isOpen={isOpen} />
                 <SideItem to="/profile" label="Profile" isOpen={isOpen} />
             </nav>
 

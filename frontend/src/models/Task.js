@@ -1,6 +1,6 @@
 /**
- * @typedef {'to_do' | 'in_progess' | 'waiting' | 'done' } ProgressStatus
- * @typedef {'low' | 'medium' | 'high'} PriorityStatus
+ * @typedef {'To_do' | 'In_Progess' | 'Waiting' | 'Done' } ProgressStatus
+ * @typedef {'Low' | 'Medium' | 'High'} PriorityStatus
  *
  * @typedef {Object} Task
  * @property {string} id

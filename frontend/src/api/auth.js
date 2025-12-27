@@ -33,7 +33,20 @@ export const signUp = async (email, password, name) => {
     }
 };
 
-export const signOut = () => {
-  localStorage.removeItem('user');
-  localStorage.removeItem('token');
+export const signOut = async () => {
+  try {
+        const token = localStorage.getItem('ref_token');
+        
+        const response = await axios.post(`${API_BASE_URL}/signout`, {}, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            withCredentials: true
+        });
+        return response;
+    } catch (error) {
+        console.error("Server-side revoke failed:", error);
+    } finally {
+        localStorage.removeItem('ref_token');
+    }
 };

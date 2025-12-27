@@ -45,8 +45,10 @@ func StartServer(conn *pgx.Conn) {
 	r.POST("/testAddUser", cfg.testAdduser)
 	r.POST("/testlogin", cfg.testLogin)
 	r.POST("/testAddTask", cfg.testAddtask)
+	r.GET("/testTask", cfg.testTask)
 	r.POST("/testRefresh", cfg.refreshEndpoint)
 	r.POST("/testRevoke", cfg.revokeEndpoint)
+	r.POST("/signout", cfg.signOut)
 	r.GET("/auth/me", cfg.handlerMe)
 	r.Run(":8080")
 }
@@ -289,6 +291,46 @@ func (cfg *apiCfg) testAddtask(c *gin.Context) {
 	respondWithJSON(c.Writer, http.StatusCreated, task)
 }
 
+func (cfg *apiCfg) testTask(c *gin.Context) {
+
+	if code, msg, err := cfg.cookieHandler(c); err != nil {
+		respondWithError(c.Writer, code, msg, err)
+		return
+	}
+	type task_nameuser_json struct {
+		task_json
+		Name string `json:"name"`
+	}
+
+	task_db, err := cfg.db.GetAllTasks(context.Background())
+	if err != nil {
+		respondWithError(c.Writer, http.StatusInternalServerError, "Couldn't get tasks", err)
+		return
+	}
+
+	var all_task []task_nameuser_json
+	for _, task_val := range task_db {
+		all_task = append(all_task, task_nameuser_json{
+			task_json: task_json{
+				ID:          task_val.ID,
+				Title:       task_val.Title,
+				Description: task_val.Description,
+				Status:      string(task_val.Status),
+				Priority:    string(task_val.Priority),
+				AssignedTo:  task_val.AssignedTo,
+				CreatedBy:   task_val.CreatedBy,
+				CreatedAt:   task_val.CreatedAt,
+				UpdatedAt:   task_val.UpdatedAt,
+				StartDate:   task_val.StartDate,
+				DueDate:     task_val.DueDate,
+			},
+			Name: task_val.Name,
+		})
+	}
+
+	respondWithJSON(c.Writer, http.StatusOK, all_task)
+}
+
 func respondWithError(w http.ResponseWriter, code int, msg string, err error) {
 	if err != nil {
 		log.Println(err)
@@ -368,6 +410,14 @@ func (cfg *apiCfg) revokeEndpoint(c *gin.Context) {
 
 	respondWithJSON(c.Writer, http.StatusNoContent, nil)
 
+}
+
+func (cfg *apiCfg) signOut(c *gin.Context) {
+	c.SetCookie("ac_token", "", -1, "/", "", false, true)
+
+	cfg.revokeEndpoint(c)
+
+	respondWithJSON(c.Writer, http.StatusOK, gin.H{"message": "Signed out successfully"})
 }
 
 func (cfg *apiCfg) handlerMe(c *gin.Context) {
