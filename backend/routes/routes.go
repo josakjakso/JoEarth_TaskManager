@@ -55,7 +55,7 @@ type apiCfg struct {
 	db *database.Queries
 	//platform string
 	secret string
-	user user_json
+	user   user_json
 	//apikey   string
 }
 
@@ -162,7 +162,7 @@ func (cfg *apiCfg) testLogin(c *gin.Context) {
 		return
 	}
 	if pass_match {
-		duration := time.Second * 60
+		duration := time.Second * 6000
 		ac_token, err := auth.MakeJWT(user_db.ID, cfg.secret, duration)
 		if err != nil {
 			respondWithError(c.Writer, http.StatusInternalServerError, "make JWT auth err", err)
@@ -199,10 +199,7 @@ func (cfg *apiCfg) testLogin(c *gin.Context) {
 		}
 
 		cfg.user = user
-		c.SetCookie("ac_token", ac_token, 60, "/", "", false, true)
-
-		
-
+		c.SetCookie("ac_token", ac_token, 6000, "/", "", false, true)
 
 		respondWithJSON(c.Writer, http.StatusOK, token_response)
 	} else {
@@ -236,8 +233,8 @@ func (cfg *apiCfg) testAddtask(c *gin.Context) {
 		DueDate     pgtype.Timestamp `json:"due_date"`
 	}
 
-	if code,msg,err := cfg.cookieHandler(c); err != nil{
-		respondWithError(c.Writer,code,msg,err)
+	if code, msg, err := cfg.cookieHandler(c); err != nil {
+		respondWithError(c.Writer, code, msg, err)
 		return
 	}
 
@@ -375,8 +372,8 @@ func (cfg *apiCfg) revokeEndpoint(c *gin.Context) {
 
 func (cfg *apiCfg) handlerMe(c *gin.Context) {
 
-	if code,msg,err := cfg.cookieHandler(c); err != nil{
-		respondWithError(c.Writer,code,msg,err)
+	if code, msg, err := cfg.cookieHandler(c); err != nil {
+		respondWithError(c.Writer, code, msg, err)
 		return
 	}
 
@@ -398,12 +395,12 @@ func (cfg *apiCfg) handlerMe(c *gin.Context) {
 	respondWithJSON(c.Writer, http.StatusOK, user)
 }
 
-func (cfg *apiCfg) cookieHandler (c *gin.Context) (httpcode int,msg string,err error){
-	
+func (cfg *apiCfg) cookieHandler(c *gin.Context) (httpcode int, msg string, err error) {
+
 	access_token, err := c.Cookie("ac_token")
 	if err != nil {
 		//respondWithError(c.Writer, http.StatusUnauthorized, "No access token found", err)
-		return  http.StatusUnauthorized, "No cookie access token found", err
+		return http.StatusUnauthorized, "No cookie access token found", err
 	}
 
 	user_id, err := auth.ValidateJWT(access_token, cfg.secret)

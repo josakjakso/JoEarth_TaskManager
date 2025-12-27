@@ -1,1 +1,26 @@
 @import "tailwindcss";
+
+img.enlarged {
+  height: 400px;
+}
+
+.PopUp{
+  position: fixed;
+
+  left: 35%;
+  top: 20%;
+
+  width:auto;
+
+  border: 1px solid black;
+  border-radius: 1em;
+
+  background-color: white;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+
+  color: #011627;
+}
