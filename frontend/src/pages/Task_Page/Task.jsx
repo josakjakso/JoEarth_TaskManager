@@ -4,11 +4,13 @@ import { useState } from 'react';
 import PopUp from '../../components/PopUp.jsx';
 import formatDate from '../../components/foramatDate.jsx';
 import { addTask } from '../../api/task.js';
-import { getTasks } from '../../api/task.js';
+import { getTasks, getTaskAssignToUser, getTaskCreateByUser } from '../../api/task.js';
 export default function TaskTable() {
     const [showPopUp, setShowPopUp] = useState(false)
     const [error, setError] = useState('');
-    const [tasks, setTasks] = useState([]);
+    const [tasks_byME, setTasks_byME] = useState([]);
+    const [tasks_toME, setTasks_toME] = useState([]);
+
 
     const handleDropdown = (e) => {
         const { name, value } = e.target;
@@ -21,8 +23,8 @@ export default function TaskTable() {
         assignedTo: "",
         startDate: "",
         dueDate: "",
-        status: "to_do",
-        priority: "medium"
+        status: "To_do",
+        priority: "Medium"
     });
 
     const handleSubmit = async (e) => {
@@ -41,15 +43,27 @@ export default function TaskTable() {
     }
 
     useEffect(() => {
-        const task = async () => {
+        const task_byUser = async () => {
             try {
-                const data = await getTasks();
-                setTasks(data);
+                const data = await getTaskCreateByUser();
+                setTasks_byME(data);
             } catch (err) {
                 console.error('Failed to fetch tasks:', err);
             }
         };
-        task();
+
+        const task_toUser = async () => {
+            try {
+                const data = await getTaskAssignToUser();
+                setTasks_toME(data);
+            } catch (err) {
+                console.error('Failed to fetch tasks:', err);
+            }
+        };
+        task_byUser();
+        task_toUser();
+        console.log('tasks_byME:', tasks_byME);
+        console.log('tasks_toME:', tasks_toME);
     }, []);
 
 
@@ -62,56 +76,119 @@ export default function TaskTable() {
                 </PopUp>
             </div>
             <div className="overflow-x-auto pt-10 ">
-                <table className="min-w-full border border-gray-300">
-                    <thead className="bg-gray-100">
-                        <tr>
-                            <th className="border px-3 py-2 text-left">Title</th>
-                            <th className="border px-3 py-2">Status</th>
-                            <th className="border px-3 py-2">Priority</th>
-                            <th className="border px-3 py-2">Assigned To</th>
-                            <th className="border px-3 py-2">Start Date</th>
-                            <th className="border px-3 py-2">Due Date</th>
-                            <th className="border px-3 py-2"></th>
-                        </tr>
-                    </thead>
+                {tasks_byME && (
 
-                    <tbody>
-                        {tasks.map((task) => (
-                            <tr key={task.id} className="hover:bg-gray-50">
-                                <td className="border px-3 py-2">
-                                    <div className="font-medium">{task.title}</div>
-                                    <div className="text-sm text-gray-500">
-                                        {task.description}
-                                    </div>
-                                </td>
+                    <div>
+                        <h1>tasks_byME</h1>
+                        <table className="min-w-full border border-gray-300">
 
-                                <td className="border px-3 py-2 text-center">
-                                    <StatusBadge status={task.status} />
-                                </td>
+                            <thead className="bg-gray-100">
+                                <tr>
+                                    <th className="border px-3 py-2 text-left">Title</th>
+                                    <th className="border px-3 py-2">Status</th>
+                                    <th className="border px-3 py-2">Priority</th>
+                                    <th className="border px-3 py-2">Assigned To</th>
+                                    <th className="border px-3 py-2">Start Date</th>
+                                    <th className="border px-3 py-2">Due Date</th>
+                                    <th className="border px-3 py-2"></th>
+                                </tr>
+                            </thead>
 
-                                <td className="border px-3 py-2 text-center">
-                                    <PriorityBadge priority={task.priority} />
-                                </td>
+                            <tbody>
+                                {tasks_byME.map((task) => (
+                                    <tr key={task.id} className="hover:bg-gray-50">
+                                        <td className="border px-3 py-2">
+                                            <div className="font-medium">{task.title}</div>
+                                            <div className="text-sm text-gray-500">
+                                                {task.description}
+                                            </div>
+                                        </td>
 
-                                <td className="border px-3 py-2 text-center">
-                                    {task.name}
-                                </td>
+                                        <td className="border px-3 py-2 text-center">
+                                            <StatusBadge status={task.status} />
+                                        </td>
 
-                                <td className="border px-3 py-2 text-center">
-                                    {formatDate(task.start_date) ?? '-'}
-                                </td>
+                                        <td className="border px-3 py-2 text-center">
+                                            <PriorityBadge priority={task.priority} />
+                                        </td>
 
-                                <td className="border px-3 py-2 text-center">
-                                    {formatDate(task.due_date) ?? '-'}
-                                </td>
-                                <td className="border px-3 py-2 text-center">
-                                    <button className='border rounded px-1 py-1'>delete</button>
-                                </td>
+                                        <td className="border px-3 py-2 text-center">
+                                            {task.name}
+                                        </td>
 
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                        <td className="border px-3 py-2 text-center">
+                                            {formatDate(task.start_date) ?? '-'}
+                                        </td>
+
+                                        <td className="border px-3 py-2 text-center">
+                                            {formatDate(task.due_date) ?? '-'}
+                                        </td>
+                                        <td className="border px-3 py-2 text-center">
+                                            <button className='border rounded px-1 py-1'>delete</button>
+                                        </td>
+
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {tasks_toME && (
+                    <div>
+                        <h1>tasks_toME</h1>
+                        <table className="min-w-full border border-gray-300">
+                            <thead className="bg-gray-100">
+                                <tr>
+                                    <th className="border px-3 py-2 text-left">Title</th>
+                                    <th className="border px-3 py-2">Status</th>
+                                    <th className="border px-3 py-2">Priority</th>
+                                    <th className="border px-3 py-2">Assigned To</th>
+                                    <th className="border px-3 py-2">Start Date</th>
+                                    <th className="border px-3 py-2">Due Date</th>
+                                    <th className="border px-3 py-2"></th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {tasks_toME.map((task) => (
+                                    <tr key={task.id} className="hover:bg-gray-50">
+                                        <td className="border px-3 py-2">
+                                            <div className="font-medium">{task.title}</div>
+                                            <div className="text-sm text-gray-500">
+                                                {task.description}
+                                            </div>
+                                        </td>
+
+                                        <td className="border px-3 py-2 text-center">
+                                            <StatusBadge status={task.status} />
+                                        </td>
+
+                                        <td className="border px-3 py-2 text-center">
+                                            <PriorityBadge priority={task.priority} />
+                                        </td>
+
+                                        <td className="border px-3 py-2 text-center">
+                                            {task.name}
+                                        </td>
+
+                                        <td className="border px-3 py-2 text-center">
+                                            {formatDate(task.start_date) ?? '-'}
+                                        </td>
+
+                                        <td className="border px-3 py-2 text-center">
+                                            {formatDate(task.due_date) ?? '-'}
+                                        </td>
+                                        <td className="border px-3 py-2 text-center">
+                                            <button className='border rounded px-1 py-1'>delete</button>
+                                        </td>
+
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
         </div>
     );

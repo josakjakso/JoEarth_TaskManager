@@ -14,12 +14,12 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
 
-func StartServer(conn *pgx.Conn) {
+func StartServer(conn *pgxpool.Pool) {
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173"},
@@ -295,9 +295,9 @@ func (cfg *apiCfg) testAddtask(c *gin.Context) {
 }
 
 type task_nameuser_json struct {
-		task_json
-		Name string `json:"name"`
-	}
+	task_json
+	Name string `json:"name"`
+}
 
 func (cfg *apiCfg) testTask(c *gin.Context) {
 
@@ -305,7 +305,6 @@ func (cfg *apiCfg) testTask(c *gin.Context) {
 		respondWithError(c.Writer, code, msg, err)
 		return
 	}
-	
 
 	task_db, err := cfg.db.GetAllTasks(context.Background())
 	if err != nil {
@@ -343,7 +342,7 @@ func (cfg *apiCfg) testTaskAssignToUser(c *gin.Context) {
 		return
 	}
 
-	task_db,err := cfg.db.GetAllTasksAssignToUser(context.Background(),cfg.user.ID)
+	task_db, err := cfg.db.GetAllTasksAssignToUser(context.Background(), cfg.user.ID)
 	if err != nil {
 		respondWithError(c.Writer, http.StatusInternalServerError, "Couldn't get tasks", err)
 		return
@@ -353,7 +352,7 @@ func (cfg *apiCfg) testTaskAssignToUser(c *gin.Context) {
 	for _, task_val := range task_db {
 		all_task = append(all_task, task_nameuser_json{
 			task_json: task_json{
-				ID: task_val.ID,
+				ID:          task_val.ID,
 				Title:       task_val.Title,
 				Description: task_val.Description,
 				Status:      string(task_val.Status),
@@ -378,7 +377,7 @@ func (cfg *apiCfg) testTaskCreateByUser(c *gin.Context) {
 		return
 	}
 
-	task_db,err := cfg.db.GetAllTasksUserCreate(context.Background(),cfg.user.ID)
+	task_db, err := cfg.db.GetAllTasksUserCreate(context.Background(), cfg.user.ID)
 	if err != nil {
 		respondWithError(c.Writer, http.StatusInternalServerError, "Couldn't get tasks", err)
 		return
@@ -388,7 +387,7 @@ func (cfg *apiCfg) testTaskCreateByUser(c *gin.Context) {
 	for _, task_val := range task_db {
 		all_task = append(all_task, task_nameuser_json{
 			task_json: task_json{
-				ID: task_val.ID,
+				ID:          task_val.ID,
 				Title:       task_val.Title,
 				Description: task_val.Description,
 				Status:      string(task_val.Status),
@@ -408,7 +407,7 @@ func (cfg *apiCfg) testTaskCreateByUser(c *gin.Context) {
 
 func (cfg *apiCfg) testDeleteTask(c *gin.Context) {
 	type req struct {
-		Task_id    uuid.UUID `json:"task_id"`
+		Task_id uuid.UUID `json:"task_id"`
 	}
 
 	if code, msg, err := cfg.cookieHandler(c); err != nil {
@@ -422,8 +421,8 @@ func (cfg *apiCfg) testDeleteTask(c *gin.Context) {
 		return
 	}
 
-	err := cfg.db.DeleteTaskByID(context.Background(),database.DeleteTaskByIDParams{
-		ID: param.Task_id,
+	err := cfg.db.DeleteTaskByID(context.Background(), database.DeleteTaskByIDParams{
+		ID:        param.Task_id,
 		CreatedBy: cfg.user.ID,
 	})
 

@@ -36,3 +36,26 @@ export const getTasks = async () => {
     } 
 };
 
+
+export const getTaskAssignToUser = async () => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/testTaskAssignToUser`, {
+        withCredentials: true, 
+      });
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Failed to fetch tasks');
+    } 
+};
+
+
+export const getTaskCreateByUser = async () => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/testTaskCreateByUser`, {
+        withCredentials: true, 
+      });
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Failed to fetch tasks');
+    } 
+};

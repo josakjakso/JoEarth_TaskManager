@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/Zexono/JoEarth_TaskManager/routes"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 )
 
@@ -16,12 +16,11 @@ func main() {
 		log.Fatalf("can't load .env %v", err)
 	}
 
-	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+	conn, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
-	defer conn.Close(context.Background())
-
+	defer conn.Close()
 
 	// Example query to test connection
 	var version string
