@@ -29,4 +29,16 @@ VALUES
     ) RETURNING *;
 
 -- name: GetAllTasks :many
-SELECT tasks.* , users.name FROM tasks  JOIN users ON tasks.assigned_to = users.id; 
+SELECT tasks.* , users.name FROM tasks  JOIN users ON tasks.assigned_to = users.id;
+
+-- name: GetAllTasksUserCreate :many
+SELECT tasks.* , users.name FROM tasks  JOIN users ON tasks.created_by = users.id
+WHERE created_by = $1;
+
+-- name: GetAllTasksAssignToUser :many
+SELECT tasks.* , users.name FROM tasks  JOIN users ON tasks.assigned_to = users.id
+WHERE assigned_to = $1;
+
+-- name: DeleteTaskByID :exec
+DELETE FROM tasks
+WHERE id = $1 AND created_by = $2;

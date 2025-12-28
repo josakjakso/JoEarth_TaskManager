@@ -46,6 +46,9 @@ func StartServer(conn *pgx.Conn) {
 	r.POST("/testlogin", cfg.testLogin)
 	r.POST("/testAddTask", cfg.testAddtask)
 	r.GET("/testTask", cfg.testTask)
+	r.GET("/testTaskAssignToUser", cfg.testTaskAssignToUser)
+	r.GET("/testTaskCreateByUser", cfg.testTaskCreateByUser)
+	r.POST("/testDeleteTask", cfg.testDeleteTask)
 	r.POST("/testRefresh", cfg.refreshEndpoint)
 	r.POST("/testRevoke", cfg.revokeEndpoint)
 	r.POST("/signout", cfg.signOut)
@@ -291,16 +294,18 @@ func (cfg *apiCfg) testAddtask(c *gin.Context) {
 	respondWithJSON(c.Writer, http.StatusCreated, task)
 }
 
+type task_nameuser_json struct {
+		task_json
+		Name string `json:"name"`
+	}
+
 func (cfg *apiCfg) testTask(c *gin.Context) {
 
 	if code, msg, err := cfg.cookieHandler(c); err != nil {
 		respondWithError(c.Writer, code, msg, err)
 		return
 	}
-	type task_nameuser_json struct {
-		task_json
-		Name string `json:"name"`
-	}
+	
 
 	task_db, err := cfg.db.GetAllTasks(context.Background())
 	if err != nil {
@@ -329,6 +334,105 @@ func (cfg *apiCfg) testTask(c *gin.Context) {
 	}
 
 	respondWithJSON(c.Writer, http.StatusOK, all_task)
+}
+
+func (cfg *apiCfg) testTaskAssignToUser(c *gin.Context) {
+
+	if code, msg, err := cfg.cookieHandler(c); err != nil {
+		respondWithError(c.Writer, code, msg, err)
+		return
+	}
+
+	task_db,err := cfg.db.GetAllTasksAssignToUser(context.Background(),cfg.user.ID)
+	if err != nil {
+		respondWithError(c.Writer, http.StatusInternalServerError, "Couldn't get tasks", err)
+		return
+	}
+
+	var all_task []task_nameuser_json
+	for _, task_val := range task_db {
+		all_task = append(all_task, task_nameuser_json{
+			task_json: task_json{
+				ID: task_val.ID,
+				Title:       task_val.Title,
+				Description: task_val.Description,
+				Status:      string(task_val.Status),
+				Priority:    string(task_val.Priority),
+				AssignedTo:  task_val.AssignedTo,
+				CreatedBy:   task_val.CreatedBy,
+				CreatedAt:   task_val.CreatedAt,
+				UpdatedAt:   task_val.UpdatedAt,
+				StartDate:   task_val.StartDate,
+				DueDate:     task_val.DueDate,
+			},
+			Name: task_val.Name,
+		})
+	}
+	respondWithJSON(c.Writer, http.StatusOK, all_task)
+}
+
+func (cfg *apiCfg) testTaskCreateByUser(c *gin.Context) {
+
+	if code, msg, err := cfg.cookieHandler(c); err != nil {
+		respondWithError(c.Writer, code, msg, err)
+		return
+	}
+
+	task_db,err := cfg.db.GetAllTasksUserCreate(context.Background(),cfg.user.ID)
+	if err != nil {
+		respondWithError(c.Writer, http.StatusInternalServerError, "Couldn't get tasks", err)
+		return
+	}
+
+	var all_task []task_nameuser_json
+	for _, task_val := range task_db {
+		all_task = append(all_task, task_nameuser_json{
+			task_json: task_json{
+				ID: task_val.ID,
+				Title:       task_val.Title,
+				Description: task_val.Description,
+				Status:      string(task_val.Status),
+				Priority:    string(task_val.Priority),
+				AssignedTo:  task_val.AssignedTo,
+				CreatedBy:   task_val.CreatedBy,
+				CreatedAt:   task_val.CreatedAt,
+				UpdatedAt:   task_val.UpdatedAt,
+				StartDate:   task_val.StartDate,
+				DueDate:     task_val.DueDate,
+			},
+			Name: task_val.Name,
+		})
+	}
+	respondWithJSON(c.Writer, http.StatusOK, all_task)
+}
+
+func (cfg *apiCfg) testDeleteTask(c *gin.Context) {
+	type req struct {
+		Task_id    uuid.UUID `json:"task_id"`
+	}
+
+	if code, msg, err := cfg.cookieHandler(c); err != nil {
+		respondWithError(c.Writer, code, msg, err)
+		return
+	}
+
+	var param req
+	if err := c.ShouldBindJSON(&param); err != nil {
+		respondWithError(c.Writer, 400, "invalid request payload", err)
+		return
+	}
+
+	err := cfg.db.DeleteTaskByID(context.Background(),database.DeleteTaskByIDParams{
+		ID: param.Task_id,
+		CreatedBy: cfg.user.ID,
+	})
+
+	if err != nil {
+		respondWithError(c.Writer, http.StatusInternalServerError, "Couldn't delete tasks", err)
+		return
+	}
+
+	respondWithJSON(c.Writer, http.StatusOK, nil)
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string, err error) {
@@ -417,7 +521,7 @@ func (cfg *apiCfg) signOut(c *gin.Context) {
 
 	cfg.revokeEndpoint(c)
 
-	respondWithJSON(c.Writer, http.StatusOK, gin.H{"message": "Signed out successfully"})
+	respondWithJSON(c.Writer, http.StatusOK, "Signed out successfully")
 }
 
 func (cfg *apiCfg) handlerMe(c *gin.Context) {
