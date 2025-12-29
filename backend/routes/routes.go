@@ -41,18 +41,22 @@ func StartServer(conn *pgxpool.Pool) {
 		db:     database.New(conn),
 		secret: os.Getenv("SECRET"),
 	}
-	r.GET("/test3", cfg.testGetuser)
+
+	auth := r.Group("/")
+	auth.Use(cfg.AuthMiddleware())
+
+	auth.GET("/test3", cfg.testGetuser)
 	r.POST("/testAddUser", cfg.testAdduser)
 	r.POST("/testlogin", cfg.testLogin)
-	r.POST("/testAddTask", cfg.testAddtask)
-	r.GET("/testTask", cfg.testTask)
-	r.GET("/testTaskAssignToUser", cfg.testTaskAssignToUser)
-	r.GET("/testTaskCreateByUser", cfg.testTaskCreateByUser)
-	r.POST("/testDeleteTask", cfg.testDeleteTask)
+	auth.POST("/testAddTask", cfg.testAddtask)
+	auth.GET("/testTask", cfg.testTask)
+	auth.GET("/testTaskAssignToUser", cfg.testTaskAssignToUser)
+	auth.GET("/testTaskCreateByUser", cfg.testTaskCreateByUser)
+	auth.POST("/testDeleteTask", cfg.testDeleteTask)
 	r.POST("/testRefresh", cfg.refreshEndpoint)
 	r.POST("/testRevoke", cfg.revokeEndpoint)
-	r.POST("/signout", cfg.signOut)
-	r.GET("/auth/me", cfg.handlerMe)
+	auth.POST("/signout", cfg.signOut)
+	auth.GET("/auth/me", cfg.handlerMe)
 	r.Run(":8080")
 }
 
@@ -60,7 +64,6 @@ type apiCfg struct {
 	db *database.Queries
 	//platform string
 	secret string
-	user   user_json
 	//apikey   string
 }
 
@@ -203,7 +206,7 @@ func (cfg *apiCfg) testLogin(c *gin.Context) {
 			RefreshToken: refresh_db.Token,
 		}
 
-		cfg.user = user
+		//cfg.user = user
 		c.SetCookie("ac_token", ac_token, 6000, "/", "", false, true)
 
 		respondWithJSON(c.Writer, http.StatusOK, token_response)
@@ -238,10 +241,13 @@ func (cfg *apiCfg) testAddtask(c *gin.Context) {
 		DueDate     pgtype.Timestamp `json:"due_date"`
 	}
 
-	if code, msg, err := cfg.cookieHandler(c); err != nil {
-		respondWithError(c.Writer, code, msg, err)
-		return
-	}
+	//if code, msg, err := cfg.cookieHandler(c); err != nil {
+	//	respondWithError(c.Writer, code, msg, err)
+	//	return
+	//}
+
+	userIDAny, _ := c.Get(CtxUserID)
+	userID := userIDAny.(uuid.UUID)
 
 	var params parameters
 
@@ -268,7 +274,7 @@ func (cfg *apiCfg) testAddtask(c *gin.Context) {
 		Status:      database.ProgessStatus(params.Status),
 		Priority:    database.PriorityStatus(params.Priority),
 		AssignedTo:  params.User_id,
-		CreatedBy:   cfg.user.ID,
+		CreatedBy:   userID,
 		StartDate:   params.StartDate,
 		DueDate:     params.DueDate})
 
@@ -301,10 +307,13 @@ type task_nameuser_json struct {
 
 func (cfg *apiCfg) testTask(c *gin.Context) {
 
-	if code, msg, err := cfg.cookieHandler(c); err != nil {
-		respondWithError(c.Writer, code, msg, err)
-		return
-	}
+	//if code, msg, err := cfg.cookieHandler(c); err != nil {
+	//	respondWithError(c.Writer, code, msg, err)
+	//	return
+	//}
+
+	//userIDAny, _ := c.Get(CtxUserID)
+	//userID := userIDAny.(uuid.UUID)
 
 	task_db, err := cfg.db.GetAllTasks(context.Background())
 	if err != nil {
@@ -337,12 +346,14 @@ func (cfg *apiCfg) testTask(c *gin.Context) {
 
 func (cfg *apiCfg) testTaskAssignToUser(c *gin.Context) {
 
-	if code, msg, err := cfg.cookieHandler(c); err != nil {
-		respondWithError(c.Writer, code, msg, err)
-		return
-	}
+	//if code, msg, err := cfg.cookieHandler(c); err != nil {
+	//	respondWithError(c.Writer, code, msg, err)
+	//	return
+	//}
+	userIDAny, _ := c.Get(CtxUserID)
+	userID := userIDAny.(uuid.UUID)
 
-	task_db, err := cfg.db.GetAllTasksAssignToUser(context.Background(), cfg.user.ID)
+	task_db, err := cfg.db.GetAllTasksAssignToUser(context.Background(), userID)
 	if err != nil {
 		respondWithError(c.Writer, http.StatusInternalServerError, "Couldn't get tasks", err)
 		return
@@ -372,12 +383,14 @@ func (cfg *apiCfg) testTaskAssignToUser(c *gin.Context) {
 
 func (cfg *apiCfg) testTaskCreateByUser(c *gin.Context) {
 
-	if code, msg, err := cfg.cookieHandler(c); err != nil {
-		respondWithError(c.Writer, code, msg, err)
-		return
-	}
+	//if code, msg, err := cfg.cookieHandler(c); err != nil {
+	//	respondWithError(c.Writer, code, msg, err)
+	//	return
+	//}
+	userIDAny, _ := c.Get(CtxUserID)
+	userID := userIDAny.(uuid.UUID)
 
-	task_db, err := cfg.db.GetAllTasksUserCreate(context.Background(), cfg.user.ID)
+	task_db, err := cfg.db.GetAllTasksUserCreate(context.Background(), userID)
 	if err != nil {
 		respondWithError(c.Writer, http.StatusInternalServerError, "Couldn't get tasks", err)
 		return
@@ -410,10 +423,13 @@ func (cfg *apiCfg) testDeleteTask(c *gin.Context) {
 		Task_id uuid.UUID `json:"task_id"`
 	}
 
-	if code, msg, err := cfg.cookieHandler(c); err != nil {
-		respondWithError(c.Writer, code, msg, err)
-		return
-	}
+	//if code, msg, err := cfg.cookieHandler(c); err != nil {
+	//	respondWithError(c.Writer, code, msg, err)
+	//	return
+	//}
+
+	userIDAny, _ := c.Get(CtxUserID)
+	userID := userIDAny.(uuid.UUID)
 
 	var param req
 	if err := c.ShouldBindJSON(&param); err != nil {
@@ -423,7 +439,7 @@ func (cfg *apiCfg) testDeleteTask(c *gin.Context) {
 
 	err := cfg.db.DeleteTaskByID(context.Background(), database.DeleteTaskByIDParams{
 		ID:        param.Task_id,
-		CreatedBy: cfg.user.ID,
+		CreatedBy: userID,
 	})
 
 	if err != nil {
@@ -525,30 +541,32 @@ func (cfg *apiCfg) signOut(c *gin.Context) {
 
 func (cfg *apiCfg) handlerMe(c *gin.Context) {
 
-	if code, msg, err := cfg.cookieHandler(c); err != nil {
-		respondWithError(c.Writer, code, msg, err)
+	//if code, msg, err := cfg.cookieHandler(c); err != nil {
+	//	respondWithError(c.Writer, code, msg, err)
+	//	return
+	//}
+	userIDAny, _ := c.Get(CtxUserID)
+	userID := userIDAny.(uuid.UUID)
+
+	//old way waste of time
+	user_db, err := cfg.db.GetUserByID(context.Background(), userID)
+	if err != nil {
+		respondWithError(c.Writer, http.StatusNotFound, "User not found", err)
 		return
 	}
 
-	//old way waste of time
-	//user_db, err := cfg.db.GetUserByID(context.Background(), cfg.user.ID)
-	//if err != nil {
-	//	respondWithError(c.Writer, http.StatusNotFound, "User not found", err)
-	//	return
-	//}
-
 	user := user_json{
-		ID:        cfg.user.ID,
-		CreatedAt: cfg.user.CreatedAt,
-		UpdatedAt: cfg.user.UpdatedAt,
-		Email:     cfg.user.Email,
-		Name:      cfg.user.Name,
+		ID:        user_db.ID,
+		CreatedAt: user_db.CreatedAt,
+		UpdatedAt: user_db.UpdatedAt,
+		Email:     user_db.Email,
+		Name:      user_db.Name,
 	}
 
 	respondWithJSON(c.Writer, http.StatusOK, user)
 }
 
-func (cfg *apiCfg) cookieHandler(c *gin.Context) (httpcode int, msg string, err error) {
+/*func (cfg *apiCfg) cookieHandler(c *gin.Context) (httpcode int, msg string, err error) {
 
 	access_token, err := c.Cookie("ac_token")
 	if err != nil {
@@ -568,4 +586,28 @@ func (cfg *apiCfg) cookieHandler(c *gin.Context) (httpcode int, msg string, err 
 
 	return
 
+}*/
+
+const CtxUserID = "user_id"
+
+func (cfg *apiCfg) AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		accessToken, err := c.Cookie("ac_token")
+		if err != nil {
+			c.AbortWithStatusJSON(401, gin.H{"error": "no access token"})
+			return
+		}
+
+		userID, err := auth.ValidateJWT(accessToken, cfg.secret)
+		if err != nil {
+			c.AbortWithStatusJSON(401, gin.H{"error": "invalid token"})
+			return
+		}
+
+		
+		c.Set(CtxUserID, userID)
+
+		c.Next()
+	}
 }
