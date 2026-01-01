@@ -34,7 +34,7 @@ VALUES
         $2,
         $3,
         $4,
-        $5,
+        (SELECT id FROM users WHERE email = $5),
         $6,
         NOW(),
         NOW(),
@@ -48,7 +48,7 @@ type CreateTaskParams struct {
 	Description string
 	Status      ProgessStatus
 	Priority    PriorityStatus
-	AssignedTo  uuid.UUID
+	Email       string
 	CreatedBy   uuid.UUID
 	StartDate   pgtype.Timestamp
 	DueDate     pgtype.Timestamp
@@ -60,7 +60,7 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		arg.Description,
 		arg.Status,
 		arg.Priority,
-		arg.AssignedTo,
+		arg.Email,
 		arg.CreatedBy,
 		arg.StartDate,
 		arg.DueDate,
@@ -150,7 +150,7 @@ func (q *Queries) GetAllTasks(ctx context.Context) ([]GetAllTasksRow, error) {
 }
 
 const getAllTasksAssignToUser = `-- name: GetAllTasksAssignToUser :many
-SELECT tasks.id, tasks.title, tasks.description, tasks.status, tasks.priority, tasks.assigned_to, tasks.created_by, tasks.created_at, tasks.updated_at, tasks.start_date, tasks.due_date , users.name FROM tasks  JOIN users ON tasks.assigned_to = users.id
+SELECT tasks.id, tasks.title, tasks.description, tasks.status, tasks.priority, tasks.assigned_to, tasks.created_by, tasks.created_at, tasks.updated_at, tasks.start_date, tasks.due_date , users.name FROM tasks  JOIN users ON tasks.created_by = users.id
 WHERE assigned_to = $1
 `
 
@@ -203,7 +203,7 @@ func (q *Queries) GetAllTasksAssignToUser(ctx context.Context, assignedTo uuid.U
 }
 
 const getAllTasksUserCreate = `-- name: GetAllTasksUserCreate :many
-SELECT tasks.id, tasks.title, tasks.description, tasks.status, tasks.priority, tasks.assigned_to, tasks.created_by, tasks.created_at, tasks.updated_at, tasks.start_date, tasks.due_date , users.name FROM tasks  JOIN users ON tasks.created_by = users.id
+SELECT tasks.id, tasks.title, tasks.description, tasks.status, tasks.priority, tasks.assigned_to, tasks.created_by, tasks.created_at, tasks.updated_at, tasks.start_date, tasks.due_date , users.name FROM tasks  JOIN users ON tasks.assigned_to = users.id
 WHERE created_by = $1
 `
 

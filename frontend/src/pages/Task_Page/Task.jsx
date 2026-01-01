@@ -4,12 +4,16 @@ import { useState } from 'react';
 import PopUp from '../../components/PopUp.jsx';
 import formatDate from '../../components/foramatDate.jsx';
 import { addTask } from '../../api/task.js';
-import { getTasks, getTaskAssignToUser, getTaskCreateByUser } from '../../api/task.js';
+import { getTaskAssignToUser, getTaskCreateByUser } from '../../api/task.js';
+import DeleteTask from './deleteTask.jsx';
+
 export default function TaskTable() {
     const [showPopUp, setShowPopUp] = useState(false)
+    const [showDeletePopUp, setshowDeletePopUp] = useState(false)
     const [error, setError] = useState('');
     const [tasks_byME, setTasks_byME] = useState([]);
     const [tasks_toME, setTasks_toME] = useState([]);
+    const [selectedTask, setSelectedTask] = useState(null);
 
 
     const handleDropdown = (e) => {
@@ -40,6 +44,10 @@ export default function TaskTable() {
             setError(err.message);
             console.log('Add Task error from Task Page :', err.message);
         }
+    }
+    const handleDelete = (task) => {
+        setSelectedTask(task);
+        setshowDeletePopUp(true);
     }
 
     useEffect(() => {
@@ -74,6 +82,18 @@ export default function TaskTable() {
                 <PopUp showPopUp={showPopUp} closePopUp={() => setShowPopUp(false)}>
                     {addTaskform(handleSubmit, form, setForm, handleDropdown)}
                 </PopUp>
+            </div>
+            <div>
+                <DeleteTask
+                    task={selectedTask}
+                    showDeletePopUp={showDeletePopUp}
+                    setTasks_byME={setTasks_byME}
+                    onClose={() => {
+                        setshowDeletePopUp(false);
+                        setSelectedTask(null);
+                    }}>
+
+                </DeleteTask>
             </div>
             <div className="overflow-x-auto pt-10 ">
                 {tasks_byME && (
@@ -124,7 +144,7 @@ export default function TaskTable() {
                                             {formatDate(task.due_date) ?? '-'}
                                         </td>
                                         <td className="border px-3 py-2 text-center">
-                                            <button className='border rounded px-1 py-1'>delete</button>
+                                            <button className='border rounded px-1 py-1' onClick={() => handleDelete(task)} >delete</button>
                                         </td>
 
                                     </tr>
@@ -143,10 +163,11 @@ export default function TaskTable() {
                                     <th className="border px-3 py-2 text-left">Title</th>
                                     <th className="border px-3 py-2">Status</th>
                                     <th className="border px-3 py-2">Priority</th>
-                                    <th className="border px-3 py-2">Assigned To</th>
+                                    <th className="border px-3 py-2">From</th>
                                     <th className="border px-3 py-2">Start Date</th>
                                     <th className="border px-3 py-2">Due Date</th>
-                                    <th className="border px-3 py-2"></th>
+
+
                                 </tr>
                             </thead>
 
@@ -179,9 +200,7 @@ export default function TaskTable() {
                                         <td className="border px-3 py-2 text-center">
                                             {formatDate(task.due_date) ?? '-'}
                                         </td>
-                                        <td className="border px-3 py-2 text-center">
-                                            <button className='border rounded px-1 py-1'>delete</button>
-                                        </td>
+
 
                                     </tr>
                                 ))}

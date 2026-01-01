@@ -10,7 +10,7 @@ export const addTask = async (title, description, assignedTo, startDate, dueDate
         const response = await axios.post(`${API_BASE_URL}/testAddTask`, {
             title: title,
             description: description, 
-            user_id: assignedTo, 
+            user_email: assignedTo, 
             status : status,
             priority : priority,
             start_date: startDate ? new Date(startDate).toISOString() : null, 
@@ -58,4 +58,21 @@ export const getTaskCreateByUser = async () => {
     } catch (error) {
         throw new Error(error.response?.data?.message || 'Failed to fetch tasks');
     } 
+};
+
+
+export const deleteTask = async (taskId) => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/testDeleteTask`,{
+            Task_id: taskId
+        },
+         {
+        withCredentials: true, 
+      });
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Failed to fetch tasks');
+    } 
+    
+ 
 };

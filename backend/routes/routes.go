@@ -236,7 +236,7 @@ func (cfg *apiCfg) testAddtask(c *gin.Context) {
 		Description string           `json:"description"`
 		Status      string           `json:"status"`
 		Priority    string           `json:"priority"`
-		User_id     uuid.UUID        `json:"user_id"`
+		User_Email  string           `json:"user_email"`
 		StartDate   pgtype.Timestamp `json:"start_date"`
 		DueDate     pgtype.Timestamp `json:"due_date"`
 	}
@@ -273,7 +273,7 @@ func (cfg *apiCfg) testAddtask(c *gin.Context) {
 		Description: params.Description,
 		Status:      database.ProgessStatus(params.Status),
 		Priority:    database.PriorityStatus(params.Priority),
-		AssignedTo:  params.User_id,
+		Email:       params.User_Email,
 		CreatedBy:   userID,
 		StartDate:   params.StartDate,
 		DueDate:     params.DueDate})
@@ -605,7 +605,6 @@ func (cfg *apiCfg) AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		
 		c.Set(CtxUserID, userID)
 
 		c.Next()
