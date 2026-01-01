@@ -11,6 +11,8 @@ import Sidebar from './components/sideBar.jsx';
 import MainLayout from './components/MainLayout.jsx';
 import ProtectedRoute from './auth/ProtectedRoute.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
+import SigninProtectedRoute from './auth/SigninProtectedRoute.jsx';
+import Profile from './pages/Profile/Profile.jsx';
 
 export default function App() {
     return (
@@ -18,15 +20,18 @@ export default function App() {
             <BrowserRouter>
                 <NavBar />
                 <Routes>
-                    <Route path="/" element={<Signin />} />
-                    <Route path="/signup" element={<Signup />} />
-                    <Route path="/signup/success" element={<SignupSuccess />} />
-                    <Route path="/signin/success" element={<SignInSuccess />} />
+                    <Route element={<SigninProtectedRoute />}>
+                        <Route path="/" element={<Signin />} />
+                        <Route path="/signup" element={<Signup />} />
+                        <Route path="/signup-success" element={<SignupSuccess />} />
+                        <Route path="/signin-success" element={<SignInSuccess />} />
+                    </Route>
 
                     <Route element={<MainLayout />}>
                         <Route element={<ProtectedRoute />}>
                             <Route path="/test" element={<TestApi />} />
                             <Route path="/task" element={<Task />} />
+                            <Route path="/profile" element={<Profile />} />
                         </Route>
                     </Route>
                 </Routes>

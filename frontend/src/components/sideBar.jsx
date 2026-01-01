@@ -24,17 +24,11 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                 </button>
             </div>
 
-            {/* User */}
-            {isOpen && user && (
-                <div className="px-4 py-3 border-b border-gray-700 text-sm">
-                    <div className="text-gray-400">Signed in as</div>
-                    <div className="font-medium truncate">{user.name}</div>
-                </div>
-            )}
+
 
             {/* Menu */}
             <nav className="mt-4 space-y-1 px-2">
-                <SideItem to="/tasks" label="Tasks" isOpen={isOpen} />
+                <SideItem to="/task" label="Tasks" isOpen={isOpen} />
                 <SideItem to="/profile" label="Profile" isOpen={isOpen} />
             </nav>
 
