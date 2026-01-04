@@ -76,3 +76,21 @@ export const deleteTask = async (taskId) => {
     
  
 };
+
+
+export const UpdateStatus = async (taskId , newStatus) => {
+    try {
+        const response = await axios.put(`${API_BASE_URL}/testStatus`,{
+            task_id: taskId,
+            status: newStatus
+        },
+         {
+        withCredentials: true, 
+      });
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Failed to Update tasks');
+    } 
+    
+ 
+};

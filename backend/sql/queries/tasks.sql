@@ -20,7 +20,7 @@ VALUES
         $2,
         $3,
         $4,
-        (SELECT id FROM users JOIN tasks on  WHERE email = $5),
+        (SELECT id FROM users WHERE email = $5),
         $6,
         NOW(),
         NOW(),
@@ -42,3 +42,8 @@ WHERE assigned_to = $1;
 -- name: DeleteTaskByID :exec
 DELETE FROM tasks
 WHERE id = $1 AND created_by = $2;
+
+-- name: UpdateTaskByID :one
+UPDATE tasks SET status = $2, updated_at = NOW()
+WHERE id = $1 AND assigned_to = $3
+RETURNING *;

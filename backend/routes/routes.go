@@ -53,6 +53,7 @@ func StartServer(conn *pgxpool.Pool) {
 	auth.GET("/testTaskAssignToUser", cfg.testTaskAssignToUser)
 	auth.GET("/testTaskCreateByUser", cfg.testTaskCreateByUser)
 	auth.POST("/testDeleteTask", cfg.testDeleteTask)
+	auth.PUT("/testStatus", cfg.testUpdate)
 	r.POST("/testRefresh", cfg.refreshEndpoint)
 	r.POST("/testRevoke", cfg.revokeEndpoint)
 	auth.POST("/signout", cfg.signOut)
@@ -448,6 +449,45 @@ func (cfg *apiCfg) testDeleteTask(c *gin.Context) {
 	}
 
 	respondWithJSON(c.Writer, http.StatusOK, nil)
+}
+
+func (cfg *apiCfg) testUpdate(c *gin.Context) {
+	type req struct {
+		Task_id uuid.UUID `json:"task_id"`
+		Status  string    `json:"status"`
+	}
+
+	//if code, msg, err := cfg.cookieHandler(c); err != nil {
+	//	respondWithError(c.Writer, code, msg, err)
+	//	return
+	//}
+
+	userIDAny, _ := c.Get(CtxUserID)
+	userID := userIDAny.(uuid.UUID)
+
+	var param req
+	if err := c.ShouldBindJSON(&param); err != nil {
+		respondWithError(c.Writer, 400, "invalid request payload", err)
+		return
+	}
+
+	// aerr := cfg.db.DeleteTaskByID(context.Background(), database.DeleteTaskByIDParams{
+	// 	ID:        param.Task_id,
+	// 	CreatedBy: userID,
+	// })
+
+	res, err := cfg.db.UpdateTaskByID(context.Background(), database.UpdateTaskByIDParams{
+		ID:         param.Task_id,
+		Status:     database.ProgessStatus(param.Status),
+		AssignedTo: userID,
+	})
+
+	if err != nil {
+		respondWithError(c.Writer, http.StatusInternalServerError, "Couldn't update tasks", err)
+		return
+	}
+
+	respondWithJSON(c.Writer, http.StatusOK, res)
 }
 
 func respondWithError(w http.ResponseWriter, code int, msg string, err error) {

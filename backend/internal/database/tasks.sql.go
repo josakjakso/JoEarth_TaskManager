@@ -254,3 +254,34 @@ func (q *Queries) GetAllTasksUserCreate(ctx context.Context, createdBy uuid.UUID
 	}
 	return items, nil
 }
+
+const updateTaskByID = `-- name: UpdateTaskByID :one
+UPDATE tasks SET status = $2, updated_at = NOW()
+WHERE id = $1 AND assigned_to = $3
+RETURNING id, title, description, status, priority, assigned_to, created_by, created_at, updated_at, start_date, due_date
+`
+
+type UpdateTaskByIDParams struct {
+	ID         uuid.UUID
+	Status     ProgessStatus
+	AssignedTo uuid.UUID
+}
+
+func (q *Queries) UpdateTaskByID(ctx context.Context, arg UpdateTaskByIDParams) (Task, error) {
+	row := q.db.QueryRow(ctx, updateTaskByID, arg.ID, arg.Status, arg.AssignedTo)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.Status,
+		&i.Priority,
+		&i.AssignedTo,
+		&i.CreatedBy,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.StartDate,
+		&i.DueDate,
+	)
+	return i, err
+}
