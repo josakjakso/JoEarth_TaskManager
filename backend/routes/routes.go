@@ -25,7 +25,7 @@ func StartServer(conn *pgxpool.Pool) {
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173", "https://joeart.xyz", "https://www.joeart.xyz"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"}, // เพิ่มให้ครอบคลุม
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
@@ -57,24 +57,32 @@ func StartServer(conn *pgxpool.Pool) {
 	}
 
 	auth := r.Group("/")
-	auth.Use(cfg.AuthMiddleware())
 
-	auth.GET("/test3", cfg.testGetuser)
+	auth.Use(cfg.AuthMiddleware())
+	{
+		auth.GET("/test3", cfg.testGetuser)
+		auth.POST("/testAddTask", cfg.testAddtask)
+		auth.GET("/testTask", cfg.testTask)
+		auth.GET("/testTaskAssignToUser", cfg.testTaskAssignToUser)
+		auth.GET("/testTaskCreateByUser", cfg.testTaskCreateByUser)
+		auth.POST("/testDeleteTask", cfg.testDeleteTask)
+		auth.PUT("/testStatus", cfg.testUpdate)
+		auth.POST("/signout", cfg.signOut)
+		auth.GET("/auth/me", cfg.handlerMe)
+	}
+
 	r.POST("/testAddUser", cfg.testAdduser)
 	r.POST("/testlogin", cfg.testLogin)
-	auth.POST("/testAddTask", cfg.testAddtask)
-	auth.GET("/testTask", cfg.testTask)
-	auth.GET("/testTaskAssignToUser", cfg.testTaskAssignToUser)
-	auth.GET("/testTaskCreateByUser", cfg.testTaskCreateByUser)
-	auth.POST("/testDeleteTask", cfg.testDeleteTask)
-	auth.PUT("/testStatus", cfg.testUpdate)
 	r.POST("/testRefresh", cfg.refreshEndpoint)
 	r.POST("/testRevoke", cfg.revokeEndpoint)
-	auth.POST("/signout", cfg.signOut)
-	auth.GET("/auth/me", cfg.handlerMe)
 	r.GET("/auth/google", cfg.handleGoogleLogin)
 	r.GET("/auth/google/callback", cfg.handleGoogleCallback)
-	r.Run(":8080")
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	r.Run(":" + port)
 }
 
 type apiCfg struct {
