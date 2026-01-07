@@ -24,7 +24,7 @@ import (
 func StartServer(conn *pgxpool.Pool) {
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowOrigins:     []string{"http://localhost:5173", "https://joeart.xyz"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
 		AllowHeaders:     []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
@@ -40,7 +40,7 @@ func StartServer(conn *pgxpool.Pool) {
 	}
 
 	googleOauthConfig := &oauth2.Config{
-		RedirectURL:  "http://localhost:8080/auth/google/callback",
+		RedirectURL:  "https://api.joeart.xyz/auth/google/callback",
 		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"},
@@ -173,9 +173,11 @@ func (cfg *apiCfg) handleGoogleCallback(c *gin.Context) {
 
 	}
 
-	c.SetCookie("ac_token", ac_token, 6000, "/", "", false, true)
+	// c.SetCookie("ac_token", ac_token, 6000, "/", "", false, true)
+	c.SetCookie("ac_token", ac_token, 6000, "/", "joeart.xyz", true, true)
 
-	c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/task")
+	// c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/task")
+	c.Redirect(http.StatusTemporaryRedirect, "https://joeart.xyz/task")
 }
 
 func (cfg *apiCfg) testGetuser(c *gin.Context) {
@@ -310,7 +312,8 @@ func (cfg *apiCfg) testLogin(c *gin.Context) {
 		}
 
 		//cfg.user = user
-		c.SetCookie("ac_token", ac_token, 6000, "/", "", false, true)
+		// c.SetCookie("ac_token", ac_token, 6000, "/", "", false, true)
+		c.SetCookie("ac_token", ac_token, 6000, "/", "joeart.xyz", true, true)
 
 		respondWithJSON(c.Writer, http.StatusOK, token_response)
 	} else {

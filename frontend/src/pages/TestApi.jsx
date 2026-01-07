@@ -1,15 +1,18 @@
 import { useState } from 'react';
 
+
+
 export default function TestApi() {
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const API_BASE_URL = import.meta.env.VITE_API_URL;
 
     const handleFetchMessage = async () => {
         setLoading(true);
         setError('');
         try {
-            const response = await fetch('http://localhost:8080/test');
+            const response = await fetch(`${API_BASE_URL}/testlogin`);
             const data = await response.json();
             setMessage(data.message);
         } catch (err) {
