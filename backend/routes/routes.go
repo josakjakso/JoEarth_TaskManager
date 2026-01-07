@@ -24,7 +24,7 @@ import (
 func StartServer(conn *pgxpool.Pool) {
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "https://joeart.xyz"},
+		AllowOrigins:     []string{"http://localhost:5173", "https://joeart.xyz", "https://www.joeart.xyz"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
 		AllowHeaders:     []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
