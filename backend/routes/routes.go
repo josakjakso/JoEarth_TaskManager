@@ -35,10 +35,12 @@ func StartServer(conn *pgxpool.Pool) {
 		c.JSON(200, gin.H{"message": "This is a test message from the backend"})
 	})
 
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("can't load .env %v", err)
-	}
+	godotenv.Load()
+
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	log.Fatalf("can't load .env %v", err)
+	// }
 
 	googleOauthConfig := &oauth2.Config{
 		RedirectURL:  "https://api.joeart.xyz/auth/google/callback",
