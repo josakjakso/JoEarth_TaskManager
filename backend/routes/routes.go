@@ -109,21 +109,19 @@ func (cfg *apiCfg) handleGoogleCallback(c *gin.Context) {
 		Token        string `json:"token"`
 		RefreshToken string `json:"refresh_token"`
 	}
-	// 1. รับ Code จาก URL Query
+
 	code := c.Query("code")
 	if code == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Code not found"})
 		return
 	}
 
-	// 2. นำ Code ไปแลกเป็น Access Token
 	token, err := cfg.googleOauthConfig.Exchange(c.Request.Context(), code)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to exchange token"})
 		return
 	}
 
-	// 3. ใช้ Token ไปดึงข้อมูล User จาก Google API
 	resp, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user info"})
@@ -137,10 +135,6 @@ func (cfg *apiCfg) handleGoogleCallback(c *gin.Context) {
 		return
 	}
 
-	// 4. ตรวจสอบ User ในฐานข้อมูล (ใช้ email จาก googleUser.Email)
-	// dbUser, err := cfg.db.GetUserByEmail(c.Request.Context(), googleUser.Email)
-	// ถ้าไม่มี ให้สร้างใหม่ (CreateUser)
-	// ถ้ามี ให้ใช้ ID เดิม
 	user, err := cfg.db.GetUserByEmail(context.Background(), googleUser.Email)
 	if err != nil {
 		hashedPassword, err := auth.HashPassword(uuid.New().String()) // สร้างรหัสผ่านสุ่ม
@@ -179,26 +173,8 @@ func (cfg *apiCfg) handleGoogleCallback(c *gin.Context) {
 
 	}
 
-	// user_token := user_json{
-	// 	ID:        user.ID,
-	// 	CreatedAt: user.CreatedAt,
-	// 	UpdatedAt: user.UpdatedAt,
-	// 	Email:     user.Email,
-	// 	Name:      user.Name,
-	// }
-	// token_response := response{
-	// 	user_json:    user_token,
-	// 	Token:        ac_token,
-	// 	RefreshToken: refresh_db.Token,
-	// }
-
-	//cfg.user = user
 	c.SetCookie("ac_token", ac_token, 6000, "/", "", false, true)
 
-	// 5. สร้าง Session หรือ JWT (เหมือนที่คุยกันเรื่อง Cookie ก่อนหน้านี้)
-	// cfg.setSessionCookie(c, dbUser.ID)
-
-	// 6. Redirect กลับไปยังหน้า Dashboard ของ React
 	c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/task")
 }
 

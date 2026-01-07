@@ -5,7 +5,7 @@ import Signin from './pages/Signin';
 import NavBar from './components/NavBar.jsx';
 import Signup from './pages/Signup.jsx';
 import SignupSuccess from './pages/Signup_success.jsx';
-import SignInSuccess from './pages/SignIN_success.jsx';
+import SignInSuccess from './pages/Signin_success.jsx';
 import Task from './pages/Task_Page/Task.jsx';
 import Sidebar from './components/sideBar.jsx';
 import MainLayout from './components/MainLayout.jsx';
