@@ -1,6 +1,9 @@
 import formatDate from '../../components/foramatDate.jsx';
 
 export function MyCreatedTasks({ tasks, onDelete }) {
+    if (tasks === null || tasks.length === 0) {
+        return <div className="p-10 text-center text-gray-500">No tasks created yet.</div>;
+    }
     return (
         <div className="overflow-x-auto pt-5">
             <h1 className="text-xl font-bold mb-4">Tasks Created By Me</h1>

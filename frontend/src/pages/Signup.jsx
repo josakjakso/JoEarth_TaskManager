@@ -143,7 +143,7 @@ export default function Signup() {
                                 type="text"
                                 value={form.name}
                                 onChange={(e) => {
-                                    if (e.target.value.length <= 15) {
+                                    if (e.target.value.length <= 100) {
                                         setForm({ ...form, name: e.target.value });
                                     }
                                 }}

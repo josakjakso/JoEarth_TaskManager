@@ -50,3 +50,8 @@ export const signOut = async () => {
         localStorage.removeItem('ref_token');
     }
 };
+
+export const googleOauth = () => {
+    
+    window.location.href = `${API_BASE_URL}/auth/google`;
+};

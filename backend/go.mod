@@ -4,7 +4,11 @@ go 1.24.5
 
 require github.com/jackc/pgx/v5 v5.7.6
 
-require github.com/jackc/puddle/v2 v2.2.2 // indirect
+require (
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
+	github.com/jackc/puddle/v2 v2.2.2 // indirect
+	golang.org/x/oauth2 v0.34.0
+)
 
 require (
 	github.com/alexedwards/argon2id v1.0.0

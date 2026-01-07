@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import DividerWithText from '../components/DividerWithText';
 import { signIn } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
+import { googleOauth } from '../api/auth';
 
 
 
@@ -27,6 +28,12 @@ export default function Signin() {
             setError(err.message);
         }
     };
+
+    const handlegoogleOauth = async () => {
+
+        googleOauth();
+    };
+
 
 
 
@@ -65,7 +72,7 @@ export default function Signin() {
                 >
                     Sign Up
                 </button>
-                <button className="border rounded-3xl px-10 py-2 text-center  self-center bg-gray-400 hover:bg-gray-50" >Google</button>
+                <button className="border rounded-3xl px-10 py-2 text-center  self-center bg-gray-400 hover:bg-gray-50" onClick={handlegoogleOauth}>Google</button>
 
 
             </div>

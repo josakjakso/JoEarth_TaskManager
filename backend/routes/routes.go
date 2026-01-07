@@ -17,6 +17,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 func StartServer(conn *pgxpool.Pool) {
@@ -37,9 +39,18 @@ func StartServer(conn *pgxpool.Pool) {
 		log.Fatalf("can't load .env %v", err)
 	}
 
+	googleOauthConfig := &oauth2.Config{
+		RedirectURL:  "http://localhost:8080/auth/google/callback",
+		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"},
+		Endpoint:     google.Endpoint,
+	}
+
 	cfg := apiCfg{
-		db:     database.New(conn),
-		secret: os.Getenv("SECRET"),
+		db:                database.New(conn),
+		secret:            os.Getenv("SECRET"),
+		googleOauthConfig: googleOauthConfig,
 	}
 
 	auth := r.Group("/")
@@ -58,6 +69,8 @@ func StartServer(conn *pgxpool.Pool) {
 	r.POST("/testRevoke", cfg.revokeEndpoint)
 	auth.POST("/signout", cfg.signOut)
 	auth.GET("/auth/me", cfg.handlerMe)
+	r.GET("/auth/google", cfg.handleGoogleLogin)
+	r.GET("/auth/google/callback", cfg.handleGoogleCallback)
 	r.Run(":8080")
 }
 
@@ -66,6 +79,7 @@ type apiCfg struct {
 	//platform string
 	secret string
 	//apikey   string
+	googleOauthConfig *oauth2.Config
 }
 
 type user_json struct {
@@ -74,6 +88,118 @@ type user_json struct {
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 	Email     string           `json:"email"`
 	Name      string           `json:"name"`
+}
+
+type GoogleUser struct {
+	ID            string `json:"id"`
+	Email         string `json:"email"`
+	VerifiedEmail bool   `json:"verified_email"`
+	Name          string `json:"name"`
+	Picture       string `json:"picture"`
+}
+
+func (cfg *apiCfg) handleGoogleLogin(c *gin.Context) {
+	url := cfg.googleOauthConfig.AuthCodeURL("state-token")
+	c.Redirect(http.StatusTemporaryRedirect, url)
+}
+
+func (cfg *apiCfg) handleGoogleCallback(c *gin.Context) {
+	type response struct {
+		user_json
+		Token        string `json:"token"`
+		RefreshToken string `json:"refresh_token"`
+	}
+	// 1. รับ Code จาก URL Query
+	code := c.Query("code")
+	if code == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Code not found"})
+		return
+	}
+
+	// 2. นำ Code ไปแลกเป็น Access Token
+	token, err := cfg.googleOauthConfig.Exchange(c.Request.Context(), code)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to exchange token"})
+		return
+	}
+
+	// 3. ใช้ Token ไปดึงข้อมูล User จาก Google API
+	resp, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user info"})
+		return
+	}
+	defer resp.Body.Close()
+
+	var googleUser GoogleUser
+	if err := json.NewDecoder(resp.Body).Decode(&googleUser); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decode user info"})
+		return
+	}
+
+	// 4. ตรวจสอบ User ในฐานข้อมูล (ใช้ email จาก googleUser.Email)
+	// dbUser, err := cfg.db.GetUserByEmail(c.Request.Context(), googleUser.Email)
+	// ถ้าไม่มี ให้สร้างใหม่ (CreateUser)
+	// ถ้ามี ให้ใช้ ID เดิม
+	user, err := cfg.db.GetUserByEmail(context.Background(), googleUser.Email)
+	if err != nil {
+		hashedPassword, err := auth.HashPassword(uuid.New().String()) // สร้างรหัสผ่านสุ่ม
+
+		user, err = cfg.db.CreateUser(context.Background(), database.CreateUserParams{
+			Email:          googleUser.Email,
+			Name:           googleUser.Name,
+			HashedPassword: hashedPassword,
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+			return
+		}
+	}
+
+	duration := time.Second * 6000
+	ac_token, err := auth.MakeJWT(user.ID, cfg.secret, duration)
+	if err != nil {
+		respondWithError(c.Writer, http.StatusInternalServerError, "make JWT auth err", err)
+		return
+	}
+
+	refresh_token, err := auth.MakeRefreshToken()
+	if err != nil {
+		respondWithError(c.Writer, http.StatusInternalServerError, "make refresh token auth err", err)
+		return
+	}
+
+	_, err = cfg.db.CreateRefresh_tokens(context.Background(), database.CreateRefresh_tokensParams{
+		Token:  refresh_token,
+		UserID: user.ID,
+	})
+	if err != nil {
+		respondWithError(c.Writer, http.StatusInternalServerError, "Something went wrong with refresh token", err)
+		return
+
+	}
+
+	// user_token := user_json{
+	// 	ID:        user.ID,
+	// 	CreatedAt: user.CreatedAt,
+	// 	UpdatedAt: user.UpdatedAt,
+	// 	Email:     user.Email,
+	// 	Name:      user.Name,
+	// }
+	// token_response := response{
+	// 	user_json:    user_token,
+	// 	Token:        ac_token,
+	// 	RefreshToken: refresh_db.Token,
+	// }
+
+	//cfg.user = user
+	c.SetCookie("ac_token", ac_token, 6000, "/", "", false, true)
+
+	// 5. สร้าง Session หรือ JWT (เหมือนที่คุยกันเรื่อง Cookie ก่อนหน้านี้)
+	// cfg.setSessionCookie(c, dbUser.ID)
+
+	// 6. Redirect กลับไปยังหน้า Dashboard ของ React
+	c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/task")
 }
 
 func (cfg *apiCfg) testGetuser(c *gin.Context) {
