@@ -25,10 +25,10 @@ export default function NavBar() {
         }
     };
     return (
-        <nav className="fixed top-0 left-0 w-full bg-gray-500">
+        <nav className="fixed top-0 left-0 w-screen bg-gray-500">
             <div className=" px-12 sm:px-6 lg:px-40    ">
                 <div className="relative flex h-16 items-center justify-between">
-                    <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
+                    <div className="flex flex-1 items-center  ">
                         <div className="flex shrink-0 items-center">
                             <img src={bread} className="h-8 w-auto" />
                         </div>
