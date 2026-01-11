@@ -92,7 +92,25 @@ export default function Signin() {
 
 
             </div>
-
+            <footer className="absolute bottom-4 w-full text-center text-sm text-gray-400">
+                <p>© 2026 Developed by
+                    <a
+                        href="https://github.com/josakjakso"
+                        target="_blank"
+                        className="ml-1 font-medium hover:text-blue-500 transition-colors underline decoration-dotted"
+                    >
+                        Chatdanai
+                    </a>
+                    <a> and </a>
+                    <a
+                        href="https://github.com/Zexono"
+                        target="_blank"
+                        className="ml-1 font-medium hover:text-blue-500 transition-colors underline decoration-dotted"
+                    >
+                        Zexono
+                    </a>
+                </p>
+            </footer>
 
         </div>
     );
