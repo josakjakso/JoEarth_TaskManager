@@ -21,7 +21,7 @@ export function MyCreatedTasks({ tasks, onDelete }) {
                 <tbody>
                     {tasks.map((task) => (
                         <tr key={task.id} className="hover:bg-gray-50">
-                            <td className="border px-3 py-2">
+                            <td className="border px-3 py-2 max-w-xs md:max-w-md">
                                 <div className="font-medium">{task.title}</div>
                                 <div className="text-sm text-gray-500">{task.description}</div>
                             </td>
