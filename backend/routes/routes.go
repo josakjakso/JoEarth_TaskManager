@@ -187,8 +187,8 @@ func (cfg *apiCfg) handleGoogleCallback(c *gin.Context) {
 	// c.SetCookie("ac_token", ac_token, 6000, "/", "", false, true)
 	c.SetCookie("ac_token", ac_token, 6000, "/", "joeart.xyz", true, true)
 
-	c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/task")
-	// c.Redirect(http.StatusTemporaryRedirect, "https://joeart.xyz/task")
+	// c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/task")
+	c.Redirect(http.StatusTemporaryRedirect, "https://joeart.xyz/task")
 }
 
 func (cfg *apiCfg) testGetuser(c *gin.Context) {
