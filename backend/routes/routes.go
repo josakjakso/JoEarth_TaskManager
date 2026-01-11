@@ -689,7 +689,7 @@ func (cfg *apiCfg) revokeEndpoint(c *gin.Context) {
 
 func (cfg *apiCfg) signOut(c *gin.Context) {
 	// c.SetCookie("ac_token", "", -1, "/", "", false, true)
-	c.SetCookie("ac_token", "", -1, "/", "", true, true)
+	c.SetCookie("ac_token", "", -1, "/", "joeart.xyz", true, true)
 
 	cfg.revokeEndpoint(c)
 
