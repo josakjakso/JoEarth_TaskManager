@@ -26,7 +26,7 @@ func StartServer(conn *pgxpool.Pool) {
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173", "https://joeart.xyz", "https://www.joeart.xyz"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"}, // เพิ่มให้ครอบคลุม
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
@@ -184,11 +184,11 @@ func (cfg *apiCfg) handleGoogleCallback(c *gin.Context) {
 
 	}
 
-	// c.SetCookie("ac_token", ac_token, 6000, "/", "", false, true)
-	c.SetCookie("ac_token", ac_token, 6000, "/", "joeart.xyz", true, true)
+	c.SetCookie("ac_token", ac_token, 6000, "/", "", false, true)
+	// c.SetCookie("ac_token", ac_token, 6000, "/", "joeart.xyz", true, true)
 
-	// c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/task")
-	c.Redirect(http.StatusTemporaryRedirect, "https://joeart.xyz/task")
+	c.Redirect(http.StatusTemporaryRedirect, "http://localhost:5173/task")
+	// c.Redirect(http.StatusTemporaryRedirect, "https://joeart.xyz/task")
 }
 
 func (cfg *apiCfg) testGetuser(c *gin.Context) {
@@ -323,8 +323,8 @@ func (cfg *apiCfg) testLogin(c *gin.Context) {
 		}
 
 		//cfg.user = user
-		// c.SetCookie("ac_token", ac_token, 6000, "/", "", false, true)
-		c.SetCookie("ac_token", ac_token, 6000, "/", "joeart.xyz", true, true)
+		c.SetCookie("ac_token", ac_token, 6000, "/", "", false, true)
+		// c.SetCookie("ac_token", ac_token, 6000, "/", "joeart.xyz", true, true)
 
 		respondWithJSON(c.Writer, http.StatusOK, token_response)
 	} else {

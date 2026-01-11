@@ -21,6 +21,23 @@ export const signIn = async (email, password) => {
     }
 };
 
+export const signInGuest = async () => {
+    try {
+        const response = await axios.post(`${API_BASE_URL}/testlogin`, {
+            "email": "guest@joeart.xyz",
+            "password": "guestguest"
+        },
+    {
+        withCredentials: true, 
+      });
+        const { refresh_token } = response.data;
+        localStorage.setItem('ref_token', refresh_token); // เก็บไว้ส่งใน Header
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.message || 'Failed to sign in');
+    }
+};
+
 export const signUp = async (email, password, name) => {
     try {
         const response = await axios.post(`${API_BASE_URL}/testAddUser`, {

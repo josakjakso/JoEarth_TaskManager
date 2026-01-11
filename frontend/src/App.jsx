@@ -23,8 +23,7 @@ export default function App() {
                     <Route element={<SigninProtectedRoute />}>
                         <Route path="/" element={<Signin />} />
                         <Route path="/signup" element={<Signup />} />
-                        <Route path="/signup-success" element={<SignupSuccess />} />
-                        <Route path="/signin-success" element={<SignInSuccess />} />
+                        <Route path="/signup/success" element={<SignupSuccess />} />
                     </Route>
 
                     <Route element={<MainLayout />}>

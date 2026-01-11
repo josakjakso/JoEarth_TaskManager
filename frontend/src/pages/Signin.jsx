@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import DividerWithText from '../components/DividerWithText';
 import { signIn } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
-import { googleOauth } from '../api/auth';
+import { googleOauth, signInGuest } from '../api/auth';
+
+
+
 
 
 
@@ -22,7 +25,7 @@ export default function Signin() {
             const response = await signIn(email, password);
             const { token, refresh_token, ...userData } = response
             console.log('Sign In Successful from signin :', userData);
-            setUser(userData); // อัปเดตสถานะผู้ใช้ใน Context
+            setUser(userData);
             navigate('/Task');
         } catch (err) {
             setError(err.message);
@@ -30,8 +33,20 @@ export default function Signin() {
     };
 
     const handlegoogleOauth = async () => {
-
         googleOauth();
+    };
+
+    const handleGuestLogin = async () => {
+        signInGuest();
+        try {
+            const response = await signInGuest();;
+            const { token, refresh_token, ...userData } = response
+            console.log('Sign In Successful from signin :', userData);
+            setUser(userData);
+            navigate('/Task');
+        } catch (err) {
+            setError(err.message);
+        }
     };
 
 
@@ -66,6 +81,7 @@ export default function Signin() {
             </form>
             <DividerWithText text={"Don't have an account?"} />
             <div className='flex flex-col gap-5'>
+                <button className="border rounded-3xl px-10 py-2 text-center  self-center bg-gray-400 hover:bg-gray-50" type="submit" onClick={handleGuestLogin} >Guest </button>
                 <button
                     className="border rounded-3xl px-10 py-2 text-center self-center bg-gray-400 hover:bg-gray-50"
                     onClick={() => navigate('/signup')}
